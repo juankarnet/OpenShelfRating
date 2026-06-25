@@ -12,13 +12,14 @@
 *   Define system boundaries clearly before code generation.
 
 ## Morphic Stack Specialization
-<!-- DYNAMIC LAYER: This section must be fully rewritten in Milestone 0.2 to match the selected stack and topology. -->
-*   **Current Stack:** [STACK_NAME]
-*   **Architecture Pattern:** [ARCHITECTURE_PATTERN]
-*   **Integration Style:** [API_FIRST / EVENT_DRIVEN / HYBRID]
-*   **Contract Format:** [OPENAPI / ASYNCAPI / BOTH]
-*   **Deployment Model:** [DEPLOYMENT_TARGET]
-*   **Forbidden Baseline:** Generic Architecture / Unbounded Stack Agnosticism
+*   Status: MILESTONE 0.2 LOCKED
+*   **Current Stack:** Java 21 LTS + Spring Boot 3.x (backend); React 18 + Vite (web); React Native + Expo (Android).
+*   **Architecture Pattern:** Hexagonal/Clean with domain-driven design, infrastructure-agnostic core, repository pattern for data access.
+*   **Integration Style:** API-First REST (OpenAPI 3.1); Event-Driven deferred to Phase 2.
+*   **Contract Format:** OpenAPI 3.1 (source of truth; code-gen client/server stubs).
+*   **Deployment Model:** Docker containers + cloud-native (12-factor principles); K8s optional.
+*   **Database:** PostgreSQL 15+ with JPA/Hibernate; Flyway migrations; Spring Data repositories.
+*   **Forbidden Baseline:** Monolithic entanglement, framework-first design, vendor lock-in without abstraction.
 
 ## Active Context Buffer
 *   **Snapshot:** [.agent-workspace/docs/PROJECT_STATE.md](../docs/PROJECT_STATE.md)

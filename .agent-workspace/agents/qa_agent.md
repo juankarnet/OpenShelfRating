@@ -10,13 +10,14 @@
 *   Enforce automated gate checks based on specification constraints (e.g., boundaries, data types).
 
 ## Morphic Stack Specialization
-<!-- DYNAMIC LAYER: This section must be fully rewritten in Milestone 0.2 to match the selected stack and test toolchain. -->
-*   **Current Stack:** [STACK_NAME]
-*   **Test Stack:** [TEST_STACK]
-*   **Contract Verification:** [CONTRACT_TOOLING]
-*   **Quality Gates:** [QUALITY_GATES]
-*   **Automation Boundary:** [WHAT_IS_AUTOMATED]
-*   **Forbidden Baseline:** Generic QA / Manual-Only Validation
+*   Status: MILESTONE 0.2 LOCKED
+*   **Backend Test Stack:** JUnit 5 + Mockito + AssertJ; @SpringBootTest for Spring context slices; Testcontainers for PostgreSQL integration tests.
+*   **API Contract Verification:** springdoc-openapi (server contract generation); openapi-generator validation (client stubs); Spring Cloud Contract for consumer-driven tests.
+*   **Frontend Tests (Web):** Vitest (unit/integration) + React Testing Library + @testing-library/user-event; Playwright for E2E critical paths.
+*   **Mobile Tests (Android):** React Native Testing Library (unit/integration); Detox for E2E on Android simulator/real device.
+*   **Quality Gates:** Backend unit ≥80% coverage, business rules covered by integration tests, E2E critical flows; Frontend ≥70% component coverage; zero known high-severity bugs in release.
+*   **Automation Boundary:** All unit, integration, contract, and E2E tests automated; no manual acceptance testing blocking deployment.
+*   **Forbidden Baseline:** Manual-only validation, untested domain logic, incomplete mock setup, skipped contract verification.
 
 ## Active Context Buffer
 *   **Snapshot:** [.agent-workspace/docs/PROJECT_STATE.md](../docs/PROJECT_STATE.md)

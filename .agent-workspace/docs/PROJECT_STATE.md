@@ -13,13 +13,15 @@
 *   **Technical Context:** `.agent-workspace/docs/TECHNICAL_MANIFEST.md`
 
 ## 3. Current Stack
-*   **Selected Stack:** Pending definition in Milestone 0.2
-*   **Architecture Pattern:** Pending definition in Milestone 0.2
-*   **Testing Stack:** Pending definition in Milestone 0.2
+*   **Selected Stack:** Java 21 + Spring Boot 3.x | PostgreSQL 15+ | S3-compatible media | React 18 + Vite | React Native (Expo)
+*   **Architecture Pattern:** Hexagonal/Clean Architecture monolith backend + dual clients (web SPA + Android native)
+*   **Testing Stack:** Backend Unit+Integration (JUnit5 + Testcontainers); Web Unit+E2E (Vitest + Playwright); Mobile (Detox or RNTL)
+*   **Auth:** JWT RS256 + OAuth 2.0/OIDC (Google, Apple, Microsoft)
+*   **API Contract:** OpenAPI 3.1 auto-generated
 
 ## 4. Open Decisions
 *   **Functional:** MVP scope locked. AI photo ingestion deferred beyond MVP.
-*   **Technical:** Select backend stack, persistence model, media storage provider, OAuth/OIDC implementation details, and testing toolchain.
+*   **Technical:** LOCKED for Milestone 0.2. Stack, architecture, clients, and testing strategy defined.
 
 ## 5. Active Constraints
 *   **Policy Source:** `.github/copilot-instructions.md`

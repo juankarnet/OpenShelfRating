@@ -10,13 +10,13 @@
 *   Maintain zero infrastructure logic inside domain services.
 
 ## Morphic Stack Specialization
-<!-- DYNAMIC LAYER: This section must be fully rewritten in Milestone 0.2 to match the selected stack. -->
-*   **Current Framework:** [STACK_NAME]
-*   **Design Principles:** [STACK_SPECIFIC_PRINCIPLES]
-*   **Code Generation Boundary:** [WHAT_IS_GENERATED]
-*   **Manual Coding Boundary:** [WHAT_REMAINS_HAND_WRITTEN]
-*   **Domain Defaults:** [STACK_DEFAULTS_AND_CONSTRAINTS]
-*   **Forbidden Baseline:** Polyglot / Generic Software Engineer
+*   Status: MILESTONE 0.2 LOCKED
+*   **Current Framework:** Java 21 LTS + Spring Boot 3.x (Spring Web, Spring Data JPA, Spring Security, Spring Cloud AWS).
+*   **Design Principles:** Hexagonal/Clean Architecture, domain-driven design, repository pattern, constructor injection.
+*   **Code Generation Boundary:** OpenAPI controllers/DTOs generated via springdoc-openapi + openapi-generator; DO NOT hand-edit.
+*   **Manual Coding Boundary:** Domain services, business logic, repository implementations, custom validators, OAuth/OIDC config.
+*   **Frontend & Mobile:** React 18 + Vite (web); React Native + Expo (Android); OpenAPI-generated client SDKs in TypeScript.
+*   **Forbidden Baseline:** Monolithic God Controllers, direct DAO-to-Controller data passing, vendor-locked APIs without abstraction.
 
 ## Active Context Buffer
 *   **Snapshot:** [.agent-workspace/docs/PROJECT_STATE.md](../docs/PROJECT_STATE.md)
