@@ -22,6 +22,20 @@ Running services:
 | MinIO API (S3) | http://localhost:9000 | `minioadmin` | `minioadmin` | Bucket: `openshelfrating-media` |
 | MinIO Console | http://localhost:9001 | `minioadmin` | `minioadmin` | Web administration UI |
 
+Optional: load deterministic dev sample data (users, books, library, reviews, media metadata):
+```powershell
+.\infra\scripts\seed-dev.ps1
+```
+
+Optional modes for richer dataset and cleanup:
+```powershell
+# Full dataset (more users/books/relations)
+.\infra\scripts\seed-dev.ps1 -Mode full
+
+# Cleanup seed data
+.\infra\scripts\seed-dev.ps1 -Mode clean
+```
+
 ## Environment Variables (Backend)
 | Variable | Default | Description |
 |---|---|---|
@@ -66,6 +80,8 @@ Available endpoints:
 | REST API | http://localhost:8080 | — | — | API root (JWT required on protected endpoints) |
 | Health / metrics | http://localhost:8080/actuator | — | — | Spring Boot Actuator |
 | Health check | http://localhost:8080/actuator/health | — | — | Application status |
+| Swagger UI | http://localhost:8080/swagger-ui/index.html | — | — | Interactive API documentation |
+| OpenAPI JSON | http://localhost:8080/v3/api-docs | — | — | OpenAPI schema |
 
 3. Start web frontend:
 ```powershell

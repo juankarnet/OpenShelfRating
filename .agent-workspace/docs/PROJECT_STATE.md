@@ -1,10 +1,10 @@
 # Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 9 - SPEC-0005 Implementation Baseline
-*   **Current Gate:** SPEC-0005 implemented and validation baseline completed (compile + tests).
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 13:25:24 +02:00
-*   **Commit Target:** `SPEC-0005: implement media management for avatars and covers`
+*   **Current Milestone:** State 10 - Frontend Kickoff Preparation
+*   **Current Gate:** Backend SPEC-0001..SPEC-0005 closed; dev seed and cleanup automation ready.
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 15:39:51 +02:00
+*   **Commit Target:** `Data: scripts to insert and clean sample data`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
