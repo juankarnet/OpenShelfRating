@@ -1,7 +1,7 @@
 # Technical Plan: SPEC-0002 - Global Book Catalog
 
 ## 1. Overview
-This technical plan outlines the implementation strategy for SPEC-0002 (Global Book Catalog). The specification is currently **In-Progress** and ready for implementation. This document will serve as the roadmap for backend development.
+This technical plan outlines the implementation strategy for SPEC-0002 (Global Book Catalog). The baseline implementation is **Completed** and committed. This document captures both implemented scope and hardening items.
 
 ## 2. Architecture & Pattern
 *   **Pattern:** Hexagonal Architecture (Clean Architecture) — consistent with SPEC-0001
@@ -343,7 +343,7 @@ app.catalog.isbn-validation-strict=true
 | **Phase 5: Documentation** | ~0.5h | OpenAPI schema, README updates | Code review ready |
 | **Total Estimated Effort** | **~6 hours** | — | Ready for production |
 
-## 4.1 Pending Items (Confirmed)
+## 4.1 Post-Implementation Hardening Backlog
 
 - ⏳ Add integration tests for deduplication and search using PostgreSQL/Testcontainers.
 - ⏳ Replace temporary `actorUserId` request parameter with identity from authenticated JWT principal.

@@ -1,10 +1,10 @@
 # Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 5 - SPEC-0002 Backend Implementation In Progress
-*   **Current Gate:** Core implementation completed and verified; pending integration coverage and auth-principal alignment.
+*   **Current Milestone:** State 6 - SPEC-0003 Clarification & Readiness Gate
+*   **Current Gate:** SPEC-0002 closed as implemented; SPEC-0003 clarification decisions being consolidated before implementation.
 *   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26
-*   **Commit Target:** `SPEC-0002: implement global catalog backend baseline`
+*   **Commit Target:** `SPEC-0003: resolve clarification decisions and implementation readiness`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -20,8 +20,8 @@
 
 ## 4. Specification Status (MVP)
 *   **SPEC-0001:** ✅ Implemented
-*   **SPEC-0002:** 🔄 In progress (implementation started)
-*   **SPEC-0003:** 📋 Planned
+*   **SPEC-0002:** ✅ Implemented (baseline committed)
+*   **SPEC-0003:** 🔄 Clarification in progress
 *   **SPEC-0004:** 📋 Planned
 *   **SPEC-0005:** 📋 Planned
 
@@ -29,7 +29,7 @@
 *   **SPEC-0001:** Identity & Access implemented and compiled.
 *   **Specification Governance:** Standard folder model applied (`SPEC-000X/` + spec/technical plan split).
 
-## 6. In-Progress Milestone
+## 6. Completed Milestone (Latest)
 *   **SPEC-0002 (Global Book Catalog)**
     - Implemented:
       - Flyway migration `V2__create_book_catalog_tables.sql`.
@@ -43,11 +43,11 @@
       - `./gradlew.bat compileJava` ✅
       - `./gradlew.bat test` ✅
 
-## 7. Pending Items (SPEC-0002)
+## 7. Post-Implementation Backlog (SPEC-0002)
 *   Add integration tests for dedup/search with PostgreSQL/Testcontainers.
 *   Replace temporary `actorUserId` request parameter with authenticated JWT principal identity.
 *   Execute AC-focused E2E checks (AC-001 to AC-005) with evidence.
 
 ## 8. Active Constraints
 *   Keep traceability between `REQ/NFR/AC/RULE` and implementation.
-*   Do not start SPEC-0003 until SPEC-0002 gate is closed.
+*   SPEC-0003 implementation starts only after open clarification decisions are resolved in spec + technical plan.

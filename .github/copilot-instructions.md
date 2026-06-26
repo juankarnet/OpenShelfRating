@@ -54,3 +54,7 @@
 *   For specification-scoped implementation commits, use this format: `SPEC-XXXX: <concise description of what was done>`.
 *   Example: `SPEC-0002: implement global catalog backend baseline`.
 *   Keep the description action-oriented and searchable to simplify historical tracking.
+
+## Specification State Update Before Commit Rule
+*   Before creating any `SPEC-XXXX` commit, update the corresponding specification status fields and `PROJECT_STATE.md` to reflect the real current state.
+*   A specification-scoped commit is not complete if traceability/status updates are missing in the same commit.
