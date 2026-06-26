@@ -1,7 +1,7 @@
 # Technical Plan: SPEC-0003 - Personal Library Management
 
 ## 1. Overview
-This technical plan outlines the implementation strategy for SPEC-0003 (Personal Library Management). Status: **Draft**, ready for implementation after SPEC-0002 completion.
+This technical plan outlines the implementation strategy for SPEC-0003 (Personal Library Management). Status: **Draft**, updated with clarified decisions and ready for implementation design.
 
 ## 2. Architecture & Pattern
 *   **Pattern:** Hexagonal Architecture — consistent with SPEC-0001/0002
@@ -28,7 +28,7 @@ com.openshelfrating.backend.library.domain/
 - `completedReadingAt` (TIMESTAMPTZ, nullable)
 - `deletedAt` (TIMESTAMPTZ, nullable — soft delete)
 
-**Unique Constraint:** (user_id, book_id) — prevent duplicate entries
+**Active Entry Uniqueness:** enforce one active row per `(user_id, book_id)` with PostgreSQL partial unique index (`WHERE deleted_at IS NULL`).
 
 ### 3.2 Repository Layer
 
@@ -36,11 +36,14 @@ com.openshelfrating.backend.library.domain/
 com.openshelfrating.backend.library.repository/
 ├── UserBookRepository
 │   ├── findByUserIdAndBookId(UUID, UUID) → Optional<UserBook>
+│   ├── findByUserIdAndBookIdAndDeletedAtIsNull(UUID, UUID) → Optional<UserBook>
+│   ├── findByUserIdAndBookIdAndDeletedAtIsNotNull(UUID, UUID) → Optional<UserBook>
 │   ├── findByUserId(UUID, Pageable) → Page<UserBook>
-│   ├── findByUserIdAndReadingState(UUID, ReadingState, Pageable) → Page<UserBook>
+│   ├── findByUserIdAndReadingStateAndDeletedAtIsNull(UUID, ReadingState, Pageable) → Page<UserBook>
 │   ├── findByUserIdAndDeletedAtNull(UUID, Pageable) → Page<UserBook>
+│   ├── findByUserId(UUID, Pageable) [includeDeleted=true] → Page<UserBook>
 │   ├── countByUserIdAndReadingState(UUID, ReadingState) → long
-│   ├── existsByUserIdAndBookId(UUID, UUID) → boolean
+│   ├── existsByUserIdAndBookIdAndDeletedAtIsNull(UUID, UUID) → boolean
 │   └── searchByUserIdAndBookTitleOrAuthor(UUID, String, Pageable) → Page<UserBook>
 ```
 
@@ -50,11 +53,12 @@ com.openshelfrating.backend.library.repository/
 com.openshelfrating.backend.library.service/
 ├── UserLibraryService (@Transactional)
 │   ├── addBookToLibrary(UUID userId, UUID bookId) → UserBookResponse
+│   │   Re-activate soft-deleted record if exists; do not create duplicate
 │   ├── removeBookFromLibrary(UUID userId, UUID bookId) → void
-│   ├── listUserLibrary(UUID userId, Pageable, ReadingState filter) → Page<UserBookResponse>
+│   ├── listUserLibrary(UUID userId, Pageable, ReadingState filter, boolean includeDeleted) → Page<UserBookResponse>
 │   ├── searchUserLibrary(UUID userId, String query, Pageable) → Page<UserBookResponse>
 │   ├── getLibraryStats(UUID userId) → UserLibraryStatsResponse
-│   └── updateReadingState(UUID userId, UUID bookId, ReadingState newState) → UserBookResponse
+│   └── updateReadingState(...) → deferred to SPEC-0004
 ```
 
 ### 3.4 API Layer
@@ -88,19 +92,23 @@ public class UserLibraryController {
     @PostMapping
     public ResponseEntity<UserBookResponse> addBook(
         @PathVariable UUID userId,
+        @AuthenticationPrincipal UUID principalUserId,
         @Valid @RequestBody AddToLibraryRequest request
-    ) { /* 201 Created or 409 Conflict */ }
+    ) { /* 201 Created, 200 Reactivated, or 409 Conflict */ }
     
     @DeleteMapping("/{bookId}")
     public ResponseEntity<Void> removeBook(
         @PathVariable UUID userId,
+        @AuthenticationPrincipal UUID principalUserId,
         @PathVariable UUID bookId
     ) { /* 204 No Content */ }
     
     @GetMapping
     public ResponseEntity<Page<UserBookResponse>> listLibrary(
         @PathVariable UUID userId,
+        @AuthenticationPrincipal UUID principalUserId,
         @RequestParam(required = false) ReadingState state,
+        @RequestParam(defaultValue = "false") boolean includeDeleted,
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) { /* 200 OK */ }
@@ -108,12 +116,14 @@ public class UserLibraryController {
     @GetMapping("/search")
     public ResponseEntity<Page<UserBookResponse>> searchLibrary(
         @PathVariable UUID userId,
+        @AuthenticationPrincipal UUID principalUserId,
         @RequestParam String q
     ) { /* 200 OK */ }
     
     @GetMapping("/stats")
     public ResponseEntity<UserLibraryStatsResponse> getStats(
-        @PathVariable UUID userId
+        @PathVariable UUID userId,
+        @AuthenticationPrincipal UUID principalUserId
     ) { /* 200 OK */ }
 }
 ```
@@ -131,9 +141,12 @@ CREATE TABLE user_books (
     added_at TIMESTAMPTZ NOT NULL,
     started_reading_at TIMESTAMPTZ,
     completed_reading_at TIMESTAMPTZ,
-    deleted_at TIMESTAMPTZ,
-    UNIQUE(user_id, book_id, deleted_at IS NULL)
+    deleted_at TIMESTAMPTZ
 );
+
+CREATE UNIQUE INDEX uq_user_books_active_user_book
+    ON user_books(user_id, book_id)
+    WHERE deleted_at IS NULL;
 
 CREATE INDEX idx_user_books_user_id ON user_books(user_id, deleted_at);
 CREATE INDEX idx_user_books_state ON user_books(user_id, reading_state, deleted_at);
@@ -151,8 +164,8 @@ CREATE INDEX idx_user_books_state ON user_books(user_id, reading_state, deleted_
 | **Total** | — | **~3.5 hours** |
 
 ## 5. Success Criteria
-- ✅ All 7 REQs implemented
-- ✅ All 5 ACs pass
+- ✅ All 8 REQs implemented
+- ✅ All 6 ACs pass
 - ✅ Unique constraint prevents duplicates
 - ✅ Soft delete preserves audit trail
 - ✅ NFR-001: List <500ms for 200+ books
