@@ -42,6 +42,18 @@ Running services:
 | `APP_MAIL_FROM` | `no-reply@openshelfrating.local` | Sender email used for auth notifications |
 | `APP_CATALOG_SEARCH_MAX_PAGE_SIZE` | `100` | Maximum allowed page size for catalog search endpoint |
 | `APP_CATALOG_ISBN_VALIDATION_STRICT` | `true` | Enables strict ISBN-10/13 checksum validation during book creation |
+| `APP_MEDIA_ALLOWED_MIME_TYPES` | `image/jpeg,image/png,image/webp` | Allowed MIME types for avatar and cover uploads |
+| `APP_MEDIA_MAX_AVATAR_SIZE` | `5242880` | Max avatar upload size in bytes (5MB) |
+| `APP_MEDIA_MAX_COVER_SIZE` | `10485760` | Max cover upload size in bytes (10MB) |
+| `APP_MEDIA_PRESIGNED_URL_EXPIRY_HOURS` | `24` | Presigned URL validity in hours |
+| `APP_MEDIA_CACHE_MAX_AGE_SECONDS` | `86400` | Cache-Control max-age for media retrieval responses |
+| `APP_MEDIA_AVATAR_PLACEHOLDER_URL` | `https://placehold.co/256x256?text=avatar` | Placeholder URL returned when user avatar is missing/deleted |
+| `APP_MEDIA_COVER_PLACEHOLDER_URL` | `https://placehold.co/512x768?text=cover` | Placeholder URL returned when book cover is missing/deleted |
+| `APP_MEDIA_S3_BUCKET_NAME` | `openshelfrating-media` | S3/MinIO bucket used for media objects |
+| `APP_MEDIA_S3_REGION` | `us-east-1` | AWS region used by S3 client and presigner |
+| `APP_MEDIA_S3_ENDPOINT` | `http://localhost:9000` | S3-compatible endpoint (MinIO in local development) |
+| `APP_MEDIA_S3_ACCESS_KEY` | `minioadmin` | S3 access key |
+| `APP_MEDIA_S3_SECRET_KEY` | `minioadmin` | S3 secret key |
 
 2. Start backend (requires JDK 21):
 ```powershell

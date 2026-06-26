@@ -1,10 +1,10 @@
 # Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 8 - SPEC-0004 Implementation Baseline
-*   **Current Gate:** SPEC-0004 implemented and validation baseline completed (compile + tests).
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 11:49:56 +02:00
-*   **Commit Target:** `SPEC-0004: implement reading lifecycle and review services`
+*   **Current Milestone:** State 9 - SPEC-0005 Implementation Baseline
+*   **Current Gate:** SPEC-0005 implemented and validation baseline completed (compile + tests).
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 13:25:24 +02:00
+*   **Commit Target:** `SPEC-0005: implement media management for avatars and covers`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -23,7 +23,7 @@
 *   **SPEC-0002:** ✅ Implemented (baseline committed)
 *   **SPEC-0003:** ✅ Implemented (baseline)
 *   **SPEC-0004:** ✅ Implemented (baseline)
-*   **SPEC-0005:** 📋 Planned
+*   **SPEC-0005:** ✅ Implemented (baseline)
 
 ## 5. Completed Milestones
 *   **SPEC-0001:** Identity & Access implemented and compiled.
@@ -47,6 +47,17 @@
       - Dedicated services (`ReadingLifecycleService`, `LibraryReviewService`).
       - API endpoints for state transition, review upsert, and review retrieval.
       - Transition constraint logic (`ReadingState.canTransitionTo`) and unit tests update.
+    - Validation:
+      - `./gradlew.bat compileJava` ✅
+      - `./gradlew.bat test` ✅
+*   **SPEC-0005 (Media Management):**
+    - Implemented:
+      - Flyway migration `V5__create_media_uploads_tables.sql`.
+      - Media domain/repository (`MediaUpload`, `MediaResourceType`, `MediaUploadRepository`).
+      - S3 integration setup (`MediaProperties`, `S3ClientConfig`, `AwsS3StorageAdapter`).
+      - Media service and API for avatar/cover upload, retrieval (presigned URL JSON), and delete.
+      - Permission model: avatar owner/admin, cover create for authenticated actor when absent, cover replace/delete admin only.
+      - User profile integration with `avatarUrl` and media validation unit tests.
     - Validation:
       - `./gradlew.bat compileJava` ✅
       - `./gradlew.bat test` ✅

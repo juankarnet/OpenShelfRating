@@ -1,11 +1,11 @@
 # Technical Plan: SPEC-0005 - Media Management (Avatars & Book Covers)
 
 ## 1. Overview
-This technical plan outlines the implementation strategy for SPEC-0005 (Media Management). Status: **Draft**, can be implemented in parallel with SPEC-0003/0004 or after.
+This technical plan outlines the implementation strategy for SPEC-0005 (Media Management). Status: **Implemented baseline**.
 
 ## 2. Architecture & Pattern
 *   **Pattern:** Service-oriented; S3-compatible storage abstraction
-*   **Integration Points:** UserAccount (avatar_url), Book (cover_url)
+*   **Integration Points:** UserAccount (avatarUrl stores stable object path), Book (coverUrl stores stable object path)
 
 ## 3. Implementation Components
 
@@ -18,7 +18,6 @@ com.openshelfrating.backend.media.domain/
 │   ├── resourceType (ENUM: AVATAR, COVER)
 │   ├── resourceId (UUID — user_id or book_id)
 │   ├── s3Path (VARCHAR, immutable)
-│   ├── presignedUrl (VARCHAR, 24h temporary)
 │   ├── mimeType (VARCHAR)
 │   ├── fileSize (LONG)
 │   ├── uploadedAt (TIMESTAMPTZ)
@@ -46,10 +45,10 @@ com.openshelfrating.backend.media.service/
 │   │   Store: S3 + update Book.coverUrl
 │   │   Return: presigned URL (24h) + metadata
 │   │
-│   ├── getPresignedUrl(UUID mediaUploadId) → String
-│   │   Generate new presigned URL if not expired
-│   │
-│   └── deleteMedia(UUID mediaUploadId) → void
+│   ├── getAvatarAccess(UUID userId) → MediaAccessResponse
+│   ├── getCoverAccess(UUID bookId) → MediaAccessResponse
+│   ├── deleteAvatar(UUID userId) → void
+│   └── deleteBookCover(UUID bookId) → void
 │       Soft-delete: set deletedAt, keep S3 object for audit
 │
 └── S3StorageAdapter
@@ -90,11 +89,14 @@ public class AvatarController {
         @PathVariable UUID userId,
         @RequestParam("file") MultipartFile file
     ) { /* 201 Created */ }
-    
+
     @GetMapping
-    public ResponseEntity<Resource> getAvatar(
+    public ResponseEntity<MediaAccessResponse> getAvatar(
         @PathVariable UUID userId
-    ) { /* 303 See Other (presigned redirect) or 200 with image */ }
+    ) { /* 200 JSON with presignedUrl + expiresAt */ }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteAvatar(@PathVariable UUID userId) { /* 204 */ }
 }
 
 @RestController
@@ -107,9 +109,12 @@ public class CoverController {
     ) { /* 201 Created */ }
     
     @GetMapping
-    public ResponseEntity<Resource> getCover(
+    public ResponseEntity<MediaAccessResponse> getCover(
         @PathVariable UUID bookId
-    ) { /* 303 See Other (presigned redirect) or 200 with image */ }
+    ) { /* 200 JSON with presignedUrl + expiresAt */ }
+
+    @DeleteMapping
+    public ResponseEntity<Void> deleteCover(@PathVariable UUID bookId) { /* 204 */ }
 }
 ```
 
@@ -207,6 +212,7 @@ aws.secretAccessKey=${AWS_SECRET_ACCESS_KEY}
 - ✅ Size limits enforced (5MB avatar, 10MB cover)
 - ✅ Presigned URLs generated (24h expiry)
 - ✅ Authorization checked (owner/admin only)
+- ✅ Authorization rules enforced: avatar owner/admin; cover create by authenticated user when absent; cover replace/delete by admin
 - ✅ NFR-001: Upload <2s, presigned URL <100ms
 - ✅ Integration tests with MinIO
 

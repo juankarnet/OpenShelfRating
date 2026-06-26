@@ -8,6 +8,7 @@ public record UserProfileResponse(
         UUID userId,
         String email,
         String displayName,
+        String avatarUrl,
         UserRole role,
         boolean emailVerified
 ) {

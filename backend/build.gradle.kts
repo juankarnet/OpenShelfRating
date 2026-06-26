@@ -33,6 +33,9 @@ dependencies {
 	implementation("org.flywaydb:flyway-database-postgresql")
 	runtimeOnly("org.postgresql:postgresql")
 
+	// Media storage (S3 compatible)
+	implementation("software.amazon.awssdk:s3:2.31.58")
+
 	// Lombok
 	compileOnly("org.projectlombok:lombok")
 	annotationProcessor("org.projectlombok:lombok")

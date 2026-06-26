@@ -118,7 +118,14 @@ public class AuthService {
     public UserProfileResponse getProfile(UUID userId) {
         UserAccount user = userAccountRepository.findById(userId)
                 .orElseThrow(() -> new AuthException(HttpStatus.NOT_FOUND, "User not found"));
-        return new UserProfileResponse(user.getId(), user.getEmail(), user.getDisplayName(), user.getRole(), user.isEmailVerified());
+        return new UserProfileResponse(
+            user.getId(),
+            user.getEmail(),
+            user.getDisplayName(),
+            user.getAvatarUrl(),
+            user.getRole(),
+            user.isEmailVerified()
+        );
     }
 
     public UserProfileResponse updateProfile(UUID userId, UpdateProfileRequest request) {
@@ -126,6 +133,13 @@ public class AuthService {
                 .orElseThrow(() -> new AuthException(HttpStatus.NOT_FOUND, "User not found"));
         user.setDisplayName(request.displayName().trim());
         user = userAccountRepository.save(user);
-        return new UserProfileResponse(user.getId(), user.getEmail(), user.getDisplayName(), user.getRole(), user.isEmailVerified());
+        return new UserProfileResponse(
+            user.getId(),
+            user.getEmail(),
+            user.getDisplayName(),
+            user.getAvatarUrl(),
+            user.getRole(),
+            user.isEmailVerified()
+        );
     }
 }

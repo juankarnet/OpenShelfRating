@@ -34,6 +34,9 @@ public class UserAccount {
     @Column(name = "display_name", nullable = false, length = 120)
     private String displayName;
 
+    @Column(name = "avatar_url", length = 2048)
+    private String avatarUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private UserRole role;
@@ -90,6 +93,14 @@ public class UserAccount {
 
     public void setDisplayName(String displayName) {
         this.displayName = displayName;
+    }
+
+    public String getAvatarUrl() {
+        return avatarUrl;
+    }
+
+    public void setAvatarUrl(String avatarUrl) {
+        this.avatarUrl = avatarUrl;
     }
 
     public UserRole getRole() {
