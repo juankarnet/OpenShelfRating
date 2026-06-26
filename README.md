@@ -40,6 +40,8 @@ Running services:
 | `SPRING_MAIL_SMTP_AUTH` | `false` | Enables SMTP authentication |
 | `SPRING_MAIL_SMTP_STARTTLS_ENABLE` | `false` | Enables STARTTLS |
 | `APP_MAIL_FROM` | `no-reply@openshelfrating.local` | Sender email used for auth notifications |
+| `APP_CATALOG_SEARCH_MAX_PAGE_SIZE` | `100` | Maximum allowed page size for catalog search endpoint |
+| `APP_CATALOG_ISBN_VALIDATION_STRICT` | `true` | Enables strict ISBN-10/13 checksum validation during book creation |
 
 2. Start backend (requires JDK 21):
 ```powershell

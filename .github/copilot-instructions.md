@@ -49,3 +49,8 @@
 ## Milestone Sync Rule
 *   Before switching Milestones, the user will explicitly state: `[SYNC: FILE_NAME]`.
 *   Read the latest disk version of that file before generating the next response.
+
+## Commit Message Convention Rule
+*   For specification-scoped implementation commits, use this format: `SPEC-XXXX: <concise description of what was done>`.
+*   Example: `SPEC-0002: implement global catalog backend baseline`.
+*   Keep the description action-oriented and searchable to simplify historical tracking.

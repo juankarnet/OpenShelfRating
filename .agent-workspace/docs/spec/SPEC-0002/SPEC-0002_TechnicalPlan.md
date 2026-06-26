@@ -343,6 +343,12 @@ app.catalog.isbn-validation-strict=true
 | **Phase 5: Documentation** | ~0.5h | OpenAPI schema, README updates | Code review ready |
 | **Total Estimated Effort** | **~6 hours** | — | Ready for production |
 
+## 4.1 Pending Items (Confirmed)
+
+- ⏳ Add integration tests for deduplication and search using PostgreSQL/Testcontainers.
+- ⏳ Replace temporary `actorUserId` request parameter with identity from authenticated JWT principal.
+- ⏳ Run AC-focused end-to-end validation for AC-001 to AC-005 and document evidence.
+
 ## 5. Success Criteria
 
 ### Functional Coverage
