@@ -61,6 +61,20 @@ export interface UserBookResponse {
   opinion?: string | null
 }
 
+export interface MediaUploadResponse {
+  uploadId: string
+  presignedUrl: string
+  expiresAt: string
+  mimeType: string
+  fileSize: number
+}
+
+export interface MediaAccessResponse {
+  url: string
+  expiresAt: string
+  placeholder: boolean
+}
+
 export interface UserLibraryStatsResponse {
   totalBooks: number
   pendingCount: number
@@ -93,7 +107,10 @@ const request = async <T>(
   token?: string,
 ): Promise<T> => {
   const headers = new Headers(init?.headers)
-  headers.set('Content-Type', 'application/json')
+  const hasFormDataBody = typeof FormData !== 'undefined' && init?.body instanceof FormData
+  if (!hasFormDataBody) {
+    headers.set('Content-Type', 'application/json')
+  }
   if (token) {
     headers.set('Authorization', `Bearer ${token}`)
   }
@@ -206,6 +223,97 @@ export const libraryApi = {
   },
   stats: (userId: string, token: string) =>
     request<UserLibraryStatsResponse>(`/users/${userId}/library/stats`, undefined, token),
+
+  updateState: (
+    userId: string,
+    bookId: string,
+    payload: { newState: 'PENDING' | 'READING' | 'READ'; readingDate?: string },
+    token: string,
+  ) =>
+    request<UserBookResponse>(
+      `/users/${userId}/library/${bookId}/state`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      },
+      token,
+    ),
+
+  submitReview: (
+    userId: string,
+    bookId: string,
+    payload: { rating: number | null; opinion: string | null },
+    token: string,
+  ) =>
+    request<UserBookResponse>(
+      `/users/${userId}/library/${bookId}/review`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      token,
+    ),
+
+  getReview: (userId: string, bookId: string, token: string) =>
+    request<UserBookResponse>(`/users/${userId}/library/${bookId}`, undefined, token),
+}
+
+export const mediaApi = {
+  uploadAvatar: (
+    userId: string,
+    file: { uri: string; name: string; type: string },
+    token: string,
+  ) => {
+    const formData = new FormData()
+    formData.append('file', file as unknown as Blob)
+    return request<MediaUploadResponse>(
+      `/users/${userId}/avatar`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+      token,
+    )
+  },
+
+  getAvatar: (userId: string) => request<MediaAccessResponse>(`/users/${userId}/avatar`),
+
+  deleteAvatar: (userId: string, token: string) =>
+    request<void>(
+      `/users/${userId}/avatar`,
+      {
+        method: 'DELETE',
+      },
+      token,
+    ),
+
+  uploadCover: (
+    bookId: string,
+    file: { uri: string; name: string; type: string },
+    token: string,
+  ) => {
+    const formData = new FormData()
+    formData.append('file', file as unknown as Blob)
+    return request<MediaUploadResponse>(
+      `/books/${bookId}/cover`,
+      {
+        method: 'POST',
+        body: formData,
+      },
+      token,
+    )
+  },
+
+  getCover: (bookId: string) => request<MediaAccessResponse>(`/books/${bookId}/cover`),
+
+  deleteCover: (bookId: string, token: string) =>
+    request<void>(
+      `/books/${bookId}/cover`,
+      {
+        method: 'DELETE',
+      },
+      token,
+    ),
 }
 
 export { API_BASE_URL }

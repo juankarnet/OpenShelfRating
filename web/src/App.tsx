@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ApiError, API_BASE_URL, authApi, catalogApi, libraryApi } from './api'
+import { ApiError, API_BASE_URL, authApi, catalogApi, libraryApi, mediaApi } from './api'
 import type {
   AuthResponse,
   BookResponse,
   BookSearchResponse,
+  MediaAccessResponse,
+  MediaUploadResponse,
   UserBookResponse,
   UserLibraryStatsResponse,
   UserProfileResponse,
@@ -45,6 +47,23 @@ function App() {
   const [libraryStateFilter, setLibraryStateFilter] = useState('')
   const [libraryItems, setLibraryItems] = useState<UserBookResponse[]>([])
   const [libraryStats, setLibraryStats] = useState<UserLibraryStatsResponse | null>(null)
+  const [stateBookId, setStateBookId] = useState('')
+  const [nextReadingState, setNextReadingState] = useState<'READING' | 'READ'>('READING')
+  const [readingDate, setReadingDate] = useState('')
+  const [reviewBookId, setReviewBookId] = useState('')
+  const [reviewRating, setReviewRating] = useState('')
+  const [reviewOpinion, setReviewOpinion] = useState('')
+  const [reviewResult, setReviewResult] = useState<UserBookResponse | null>(null)
+
+  const [avatarTargetUserId, setAvatarTargetUserId] = useState('')
+  const [avatarFile, setAvatarFile] = useState<File | null>(null)
+  const [avatarUploadResult, setAvatarUploadResult] = useState<MediaUploadResponse | null>(null)
+  const [avatarAccessResult, setAvatarAccessResult] = useState<MediaAccessResponse | null>(null)
+
+  const [coverBookId, setCoverBookId] = useState('')
+  const [coverFile, setCoverFile] = useState<File | null>(null)
+  const [coverUploadResult, setCoverUploadResult] = useState<MediaUploadResponse | null>(null)
+  const [coverAccessResult, setCoverAccessResult] = useState<MediaAccessResponse | null>(null)
 
   const effectiveUserId = useMemo(() => auth?.userId ?? profile?.userId ?? '', [auth, profile])
 
@@ -288,10 +307,201 @@ function App() {
     }
   }
 
+  const onUpdateReadingState = async () => {
+    setError('')
+    setMessage('')
+    if (!effectiveUserId || !token) {
+      setError('Login required to update reading state.')
+      return
+    }
+    if (!stateBookId) {
+      setError('Provide a book id for state transition.')
+      return
+    }
+    try {
+      const response = await libraryApi.updateState(
+        effectiveUserId,
+        stateBookId,
+        {
+          newState: nextReadingState,
+          readingDate: readingDate || undefined,
+        },
+        token,
+      )
+      setReviewResult(response)
+      setMessage('Reading state updated.')
+      await onLoadLibrary()
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onSubmitReview = async () => {
+    setError('')
+    setMessage('')
+    if (!effectiveUserId || !token) {
+      setError('Login required to submit review.')
+      return
+    }
+    if (!reviewBookId) {
+      setError('Provide a book id for review.')
+      return
+    }
+    const parsedRating = reviewRating.trim() === '' ? null : Number(reviewRating)
+    if (parsedRating !== null && (Number.isNaN(parsedRating) || parsedRating < 1 || parsedRating > 5)) {
+      setError('Rating must be between 1 and 5.')
+      return
+    }
+    try {
+      const response = await libraryApi.submitReview(
+        effectiveUserId,
+        reviewBookId,
+        {
+          rating: parsedRating,
+          opinion: reviewOpinion.trim() === '' ? null : reviewOpinion,
+        },
+        token,
+      )
+      setReviewResult(response)
+      setMessage('Review submitted.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onGetReview = async () => {
+    setError('')
+    setMessage('')
+    if (!effectiveUserId || !token) {
+      setError('Login required to fetch review.')
+      return
+    }
+    if (!reviewBookId) {
+      setError('Provide a book id to fetch review.')
+      return
+    }
+    try {
+      const response = await libraryApi.getReview(effectiveUserId, reviewBookId, token)
+      setReviewResult(response)
+      setMessage('Review loaded.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onUploadAvatar = async () => {
+    setError('')
+    setMessage('')
+    const targetUserId = avatarTargetUserId || effectiveUserId
+    if (!targetUserId || !token) {
+      setError('Login required to upload avatar.')
+      return
+    }
+    if (!avatarFile) {
+      setError('Select an avatar image first.')
+      return
+    }
+    try {
+      const response = await mediaApi.uploadAvatar(targetUserId, avatarFile, token)
+      setAvatarUploadResult(response)
+      setMessage('Avatar uploaded.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onGetAvatar = async () => {
+    setError('')
+    setMessage('')
+    const targetUserId = avatarTargetUserId || effectiveUserId
+    if (!targetUserId) {
+      setError('Provide user id or login first.')
+      return
+    }
+    try {
+      const response = await mediaApi.getAvatar(targetUserId)
+      setAvatarAccessResult(response)
+      setMessage('Avatar access loaded.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onDeleteAvatar = async () => {
+    setError('')
+    setMessage('')
+    const targetUserId = avatarTargetUserId || effectiveUserId
+    if (!targetUserId || !token) {
+      setError('Login required to delete avatar.')
+      return
+    }
+    try {
+      await mediaApi.deleteAvatar(targetUserId, token)
+      setAvatarUploadResult(null)
+      setAvatarAccessResult(null)
+      setMessage('Avatar deleted.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onUploadCover = async () => {
+    setError('')
+    setMessage('')
+    if (!coverBookId || !token) {
+      setError('Login and provide book id to upload cover.')
+      return
+    }
+    if (!coverFile) {
+      setError('Select a cover image first.')
+      return
+    }
+    try {
+      const response = await mediaApi.uploadCover(coverBookId, coverFile, token)
+      setCoverUploadResult(response)
+      setMessage('Cover uploaded.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onGetCover = async () => {
+    setError('')
+    setMessage('')
+    if (!coverBookId) {
+      setError('Provide book id to fetch cover access.')
+      return
+    }
+    try {
+      const response = await mediaApi.getCover(coverBookId)
+      setCoverAccessResult(response)
+      setMessage('Cover access loaded.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onDeleteCover = async () => {
+    setError('')
+    setMessage('')
+    if (!coverBookId || !token) {
+      setError('Login and provide book id to delete cover.')
+      return
+    }
+    try {
+      await mediaApi.deleteCover(coverBookId, token)
+      setCoverUploadResult(null)
+      setCoverAccessResult(null)
+      setMessage('Cover deleted.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
   return (
     <main className="spec-app">
       <header>
-        <h1>OpenShelfRating - SPEC-0001 Frontend</h1>
+        <h1>OpenShelfRating - SPEC-0001..0005 Frontend</h1>
         <p>API base: {API_BASE_URL}</p>
         {token ? (
           <button type="button" onClick={clearSession}>Logout</button>
@@ -457,6 +667,84 @@ function App() {
             <pre>{JSON.stringify(libraryStats, null, 2)}</pre>
           ) : null}
         </div>
+
+        <div className="card">
+          <h2>Reading Lifecycle (SPEC-0004)</h2>
+          <input
+            value={stateBookId}
+            onChange={(event) => setStateBookId(event.target.value)}
+            placeholder="book id"
+          />
+          <select
+            value={nextReadingState}
+            onChange={(event) => setNextReadingState(event.target.value as 'READING' | 'READ')}
+          >
+            <option value="READING">READING</option>
+            <option value="READ">READ</option>
+          </select>
+          <input
+            value={readingDate}
+            onChange={(event) => setReadingDate(event.target.value)}
+            placeholder="readingDate ISO-8601 (optional)"
+          />
+          <button type="button" onClick={onUpdateReadingState}>Update state</button>
+        </div>
+
+        <div className="card">
+          <h2>Review (SPEC-0004)</h2>
+          <input
+            value={reviewBookId}
+            onChange={(event) => setReviewBookId(event.target.value)}
+            placeholder="book id"
+          />
+          <input
+            value={reviewRating}
+            onChange={(event) => setReviewRating(event.target.value)}
+            placeholder="rating 1-5 (optional)"
+          />
+          <textarea
+            value={reviewOpinion}
+            onChange={(event) => setReviewOpinion(event.target.value)}
+            placeholder="opinion (max 1000 chars)"
+            rows={4}
+          />
+          <button type="button" onClick={onSubmitReview}>Submit review</button>
+          <button type="button" onClick={onGetReview}>Get review</button>
+        </div>
+
+        <div className="card">
+          <h2>Avatar Media (SPEC-0005)</h2>
+          <input
+            value={avatarTargetUserId}
+            onChange={(event) => setAvatarTargetUserId(event.target.value)}
+            placeholder="target user id (optional: current session)"
+          />
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(event) => setAvatarFile(event.target.files?.[0] ?? null)}
+          />
+          <button type="button" onClick={onUploadAvatar}>Upload avatar</button>
+          <button type="button" onClick={onGetAvatar}>Get avatar access</button>
+          <button type="button" onClick={onDeleteAvatar}>Delete avatar</button>
+        </div>
+
+        <div className="card">
+          <h2>Cover Media (SPEC-0005)</h2>
+          <input
+            value={coverBookId}
+            onChange={(event) => setCoverBookId(event.target.value)}
+            placeholder="book id"
+          />
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            onChange={(event) => setCoverFile(event.target.files?.[0] ?? null)}
+          />
+          <button type="button" onClick={onUploadCover}>Upload cover</button>
+          <button type="button" onClick={onGetCover}>Get cover access</button>
+          <button type="button" onClick={onDeleteCover}>Delete cover</button>
+        </div>
       </section>
 
       {auth ? (
@@ -493,6 +781,41 @@ function App() {
               </li>
             ))}
           </ul>
+        </section>
+      ) : null}
+
+      {reviewResult ? (
+        <section className="card">
+          <h3>Review Response</h3>
+          <pre>{JSON.stringify(reviewResult, null, 2)}</pre>
+        </section>
+      ) : null}
+
+      {avatarUploadResult ? (
+        <section className="card">
+          <h3>Avatar Upload Response</h3>
+          <pre>{JSON.stringify(avatarUploadResult, null, 2)}</pre>
+        </section>
+      ) : null}
+
+      {avatarAccessResult ? (
+        <section className="card">
+          <h3>Avatar Access Response</h3>
+          <pre>{JSON.stringify(avatarAccessResult, null, 2)}</pre>
+        </section>
+      ) : null}
+
+      {coverUploadResult ? (
+        <section className="card">
+          <h3>Cover Upload Response</h3>
+          <pre>{JSON.stringify(coverUploadResult, null, 2)}</pre>
+        </section>
+      ) : null}
+
+      {coverAccessResult ? (
+        <section className="card">
+          <h3>Cover Access Response</h3>
+          <pre>{JSON.stringify(coverAccessResult, null, 2)}</pre>
         </section>
       ) : null}
 

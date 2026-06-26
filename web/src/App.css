@@ -41,11 +41,15 @@
 }
 
 .card input,
+.card select,
+.card textarea,
 .card button {
   font: inherit;
 }
 
-.card input {
+.card input,
+.card select,
+.card textarea {
   border: 1px solid #bcc7d6;
   border-radius: 8px;
   padding: 8px;

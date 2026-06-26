@@ -1,10 +1,10 @@
 # Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 10 - Frontend Kickoff Preparation
-*   **Current Gate:** Backend SPEC-0001..SPEC-0005 closed; dev seed and cleanup automation ready.
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 15:39:51 +02:00
-*   **Commit Target:** `Data: scripts to insert and clean sample data`
+*   **Current Milestone:** State 11 - Frontend Expansion (SPEC-0004/SPEC-0005)
+*   **Current Gate:** Frontend web+mobile implementado para SPEC-0001..SPEC-0005; validación técnica ejecutada (web build + mobile tsc).
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 17:05:00 +02:00
+*   **Commit Target:** `SPEC-0004: implement frontend reading lifecycle and reviews (web+mobile)`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -84,3 +84,10 @@
 ## 8. Active Constraints
 *   Keep traceability between `REQ/NFR/AC/RULE` and implementation.
 *   Keep specification and `PROJECT_STATE.md` status synchronized before each `SPEC-XXXX` commit.
+
+## 9. Frontend Delivery Snapshot
+*   **SPEC-0001 (frontend):** ✅ committed (`125e43d`)
+*   **SPEC-0002 (frontend):** ✅ committed (`1b4ed08`)
+*   **SPEC-0003 (frontend):** ✅ committed (`a08feae`)
+*   **SPEC-0004 (frontend):** ✅ implemented + validated, commit pending
+*   **SPEC-0005 (frontend):** ✅ implemented + validated, commit pending

@@ -178,3 +178,20 @@ CREATE INDEX idx_state_transitions_userbook ON reading_state_transitions(user_bo
 - ✅ Timestamps captured for all transitions
 - ✅ NFR-001: Update <200ms
 - ✅ Integration tests pass
+
+## 7. Frontend Implementation Steps (Web + Mobile)
+
+### 7.1 Web (React)
+- Implement reading state transition form (`PENDING` -> `READING` -> `READ`) bound to `PATCH /users/{userId}/library/{bookId}/state`.
+- Implement review upsert form (rating 1-5, opinion <= 1000) bound to `POST /users/{userId}/library/{bookId}/review`.
+- Implement review retrieval panel bound to `GET /users/{userId}/library/{bookId}`.
+- Reuse library list section to prefill `bookId` values and improve flow continuity with SPEC-0003.
+
+### 7.2 Mobile (Expo React Native)
+- Implement state transition controls with optional reading date support.
+- Implement review submit and review fetch controls for selected `bookId`.
+- Render lifecycle/review response payloads for quick verification in development.
+
+### 7.3 Validation
+- Web: execute `npm run build` in `web/`.
+- Mobile: execute TypeScript validation (`npx tsc --noEmit`) in `mobile/`.
