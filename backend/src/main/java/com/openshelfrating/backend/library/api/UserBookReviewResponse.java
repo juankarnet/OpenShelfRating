@@ -6,7 +6,7 @@ import com.openshelfrating.backend.library.domain.ReadingState;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
-public record UserBookResponse(
+public record UserBookReviewResponse(
         UUID userBookId,
         BookSearchResponse book,
         ReadingState readingState,
@@ -15,7 +15,6 @@ public record UserBookResponse(
         OffsetDateTime completedReadingAt,
         Integer rating,
         String opinion,
-        OffsetDateTime reviewUpdatedAt,
-        OffsetDateTime deletedAt
+        OffsetDateTime reviewUpdatedAt
 ) {
 }

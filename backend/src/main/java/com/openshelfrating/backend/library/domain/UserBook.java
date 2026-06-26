@@ -47,6 +47,15 @@ public class UserBook {
     @Column(name = "completed_reading_at")
     private OffsetDateTime completedReadingAt;
 
+    @Column(name = "rating")
+    private Integer rating;
+
+    @Column(name = "opinion", length = 1000)
+    private String opinion;
+
+    @Column(name = "review_updated_at")
+    private OffsetDateTime reviewUpdatedAt;
+
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
 
@@ -110,6 +119,30 @@ public class UserBook {
 
     public void setCompletedReadingAt(OffsetDateTime completedReadingAt) {
         this.completedReadingAt = completedReadingAt;
+    }
+
+    public Integer getRating() {
+        return rating;
+    }
+
+    public void setRating(Integer rating) {
+        this.rating = rating;
+    }
+
+    public String getOpinion() {
+        return opinion;
+    }
+
+    public void setOpinion(String opinion) {
+        this.opinion = opinion;
+    }
+
+    public OffsetDateTime getReviewUpdatedAt() {
+        return reviewUpdatedAt;
+    }
+
+    public void setReviewUpdatedAt(OffsetDateTime reviewUpdatedAt) {
+        this.reviewUpdatedAt = reviewUpdatedAt;
     }
 
     public OffsetDateTime getDeletedAt() {

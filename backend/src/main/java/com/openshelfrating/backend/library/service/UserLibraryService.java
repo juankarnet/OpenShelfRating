@@ -62,6 +62,9 @@ public class UserLibraryService {
             reactivated.setReadingState(ReadingState.PENDING);
             reactivated.setStartedReadingAt(null);
             reactivated.setCompletedReadingAt(null);
+            reactivated.setRating(null);
+            reactivated.setOpinion(null);
+            reactivated.setReviewUpdatedAt(null);
             reactivated.setAddedAt(OffsetDateTime.now());
             reactivated = userBookRepository.save(reactivated);
             return toResponse(reactivated);
@@ -167,6 +170,9 @@ public class UserLibraryService {
                 userBook.getAddedAt(),
                 userBook.getStartedReadingAt(),
                 userBook.getCompletedReadingAt(),
+                userBook.getRating(),
+                userBook.getOpinion(),
+                userBook.getReviewUpdatedAt(),
                 userBook.getDeletedAt()
         );
     }

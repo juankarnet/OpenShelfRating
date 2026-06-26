@@ -1,7 +1,7 @@
 # Technical Plan: SPEC-0004 - Reading Lifecycle & Reviews
 
 ## 1. Overview
-This technical plan outlines the implementation strategy for SPEC-0004 (Reading Lifecycle & Reviews). Status: **Draft**, ready for implementation after SPEC-0003 completion.
+This technical plan outlines the implementation strategy for SPEC-0004 (Reading Lifecycle & Reviews). Status: **Implemented baseline**.
 
 ## 2. Architecture & Pattern
 *   **Pattern:** State Machine on UserBook entity, enriched with review metadata
@@ -33,13 +33,13 @@ com.openshelfrating.backend.library.domain/
 ```
 com.openshelfrating.backend.library.service/
 ├── ReadingLifecycleService (@Transactional)
-│   ├── updateReadingState(UUID userId, UUID bookId, ReadingState newState, LocalDateTime customDate) → UserBookResponse
+│   ├── updateReadingState(UUID userId, UUID bookId, ReadingState newState, OffsetDateTime readingDate) → UserBookResponse
 │   │   State machine logic: PENDING → READING → READ (unidirectional)
 │   │
+├── LibraryReviewService (@Transactional)
 │   ├── submitReview(UUID userId, UUID bookId, ReviewRequest) → ReviewResponse
 │   │   Only allowed if state = READ
-│   │   Sets rating, opinion, update updatedAt
-│   │
+│   │   Sets rating, opinion, reviewUpdatedAt
 │   └── getReview(UUID userId, UUID bookId) → ReviewResponse
 │       Returns full UserBook with state, dates, rating, opinion
 ```
@@ -50,7 +50,7 @@ com.openshelfrating.backend.library.service/
 ```java
 record UpdateReadingStateRequest(
     ReadingState newState,
-    LocalDateTime customDate  // optional, for READING/READ states
+    OffsetDateTime readingDate  // optional, defaults to server timestamp
 ) {}
 
 record ReviewRequest(
@@ -111,7 +111,7 @@ ALTER TABLE user_books ADD COLUMN (
     review_updated_at TIMESTAMPTZ
 );
 
--- Optional audit table for state transitions
+-- Mandatory audit table for state transitions
 CREATE TABLE reading_state_transitions (
     id UUID PRIMARY KEY,
     user_book_id UUID NOT NULL REFERENCES user_books(id) ON DELETE CASCADE,
@@ -149,11 +149,14 @@ CREATE INDEX idx_state_transitions_userbook ON reading_state_transitions(user_bo
 ```
 
 **Validation Rules:**
-- ✅ PENDING → READING: Set startedReadingAt = system time (unless customDate provided)
-- ✅ READING → READ: Set completedReadingAt = system time (unless customDate provided)
+- ✅ PENDING → READING: Set startedReadingAt = readingDate if provided, otherwise system time
+- ✅ READING → READ: Set completedReadingAt = readingDate if provided, otherwise system time
 - ❌ Any other transition: Reject with 400 Bad Request
 - ❌ Rating/opinion set if state ≠ READ: Reject with 400 Bad Request
 - ❌ Opinion > 1000 chars: Reject with 400 Bad Request
+
+**Audit Rule:**
+- ✅ Every accepted state transition creates one row in `reading_state_transitions` with `transition_at` from server time.
 
 ## 5. Implementation Sequence
 

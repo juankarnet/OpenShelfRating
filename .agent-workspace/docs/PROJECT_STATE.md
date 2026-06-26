@@ -1,10 +1,10 @@
 # Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 7 - SPEC-0003 Implementation Baseline
-*   **Current Gate:** SPEC-0003 implemented and validation baseline completed (compile + tests).
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26
-*   **Commit Target:** `SPEC-0003: implement personal library management baseline`
+*   **Current Milestone:** State 8 - SPEC-0004 Implementation Baseline
+*   **Current Gate:** SPEC-0004 implemented and validation baseline completed (compile + tests).
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 11:49:56 +02:00
+*   **Commit Target:** `SPEC-0004: implement reading lifecycle and review services`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -22,7 +22,7 @@
 *   **SPEC-0001:** ✅ Implemented
 *   **SPEC-0002:** ✅ Implemented (baseline committed)
 *   **SPEC-0003:** ✅ Implemented (baseline)
-*   **SPEC-0004:** 📋 Planned
+*   **SPEC-0004:** ✅ Implemented (baseline)
 *   **SPEC-0005:** 📋 Planned
 
 ## 5. Completed Milestones
@@ -36,6 +36,17 @@
       - Service layer (`UserLibraryService`, `LibraryException`) with owner/admin authorization, soft delete, and reactivation behavior.
       - API (`UserLibraryController`, DTOs, `LibraryExceptionHandler`) for add/remove/list/stats endpoints.
       - Unit test baseline (`ReadingStateTest`).
+    - Validation:
+      - `./gradlew.bat compileJava` ✅
+      - `./gradlew.bat test` ✅
+*   **SPEC-0004 (Reading Lifecycle & Reviews):**
+    - Implemented:
+      - Flyway migration `V4__add_reading_lifecycle_to_user_books.sql`.
+      - Domain extensions in `UserBook` (rating/opinion/reviewUpdatedAt).
+      - State transition audit model (`ReadingStateTransition`) and repository.
+      - Dedicated services (`ReadingLifecycleService`, `LibraryReviewService`).
+      - API endpoints for state transition, review upsert, and review retrieval.
+      - Transition constraint logic (`ReadingState.canTransitionTo`) and unit tests update.
     - Validation:
       - `./gradlew.bat compileJava` ✅
       - `./gradlew.bat test` ✅
