@@ -258,6 +258,27 @@ com.openshelfrating.backend.auth.config/
 
 - **Password Reset:** AC-005 deferred to Phase 2
   - Requires: Email service stability, additional token entity
+
+## 10. Frontend Implementation Steps (Web + Mobile)
+
+### 10.1 Web (React)
+- Build a shared API client with `Authorization: Bearer <token>` support and centralized error parsing.
+- Implement register/login flows against `POST /auth/register` and `POST /auth/login`.
+- Persist JWT token and user identity in browser storage for protected interactions.
+- Implement email verification view using `GET /auth/verify-email?token=...`.
+- Implement profile read/update UI with `GET /users/{id}/profile` and `PUT /users/{id}/profile`.
+
+### 10.2 Mobile (Expo React Native)
+- Build auth service wrappers for register/login/verify/profile endpoints.
+- Implement login and register forms with client-side validation.
+- Store token and current user in app state for authenticated requests.
+- Implement profile screen with read + update actions.
+- Add explicit feedback messages for 400/403/409 auth errors.
+
+### 10.3 Validation
+- Web: execute `npm run build` in `web/`.
+- Mobile: execute TypeScript validation (`npx tsc --noEmit`) in `mobile/`.
+- Backend integration smoke: login + profile roundtrip with seeded dev users.
   - MVP Focus: Registration + email verification only
 
 - **Admin Passwordless Login:** Q-001 deferred to Phase 2
