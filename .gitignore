@@ -1,0 +1,5 @@
+# Gradle temporals and caches
+.gradle/
+build/
+.tmp/
+**/gradle-extract-*/

@@ -1,0 +1,266 @@
+openapi: 3.1.0
+info:
+  title: OpenShelfRating API
+  version: 0.1.0
+servers:
+  - url: http://localhost:8080
+paths:
+  /auth/register:
+    post:
+      summary: Register user with email/password
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User registered
+  /auth/login:
+    post:
+      summary: Login with email/password
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+  /books:
+    post:
+      summary: Create book in global catalog
+      operationId: createBook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookCreateRequest'
+      responses:
+        '201':
+          description: Book created
+    get:
+      summary: Search books
+      operationId: searchBooks
+      parameters:
+        - in: query
+          name: q
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Books found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Book'
+  /users/{userId}/library:
+    get:
+      summary: List user library
+      operationId: listUserLibrary
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Library items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserBook'
+    post:
+      summary: Add book to user library
+      operationId: addBookToLibrary
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddUserBookRequest'
+      responses:
+        '201':
+          description: Added to library
+  /users/{userId}/library/{bookId}/state:
+    patch:
+      summary: Update reading state
+      operationId: updateReadingState
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: bookId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStateRequest'
+      responses:
+        '200':
+          description: State updated
+  /users/{userId}/library/{bookId}/review:
+    post:
+      summary: Create or update user review
+      operationId: upsertReview
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - in: path
+          name: bookId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewRequest'
+      responses:
+        '200':
+          description: Review saved
+components:
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, displayName]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+    AuthResponse:
+      type: object
+      required: [accessToken, tokenType]
+      properties:
+        accessToken:
+          type: string
+        tokenType:
+          type: string
+          example: Bearer
+    BookCreateRequest:
+      type: object
+      required: [title, authors]
+      properties:
+        title:
+          type: string
+        authors:
+          type: array
+          items:
+            type: string
+        isbn13:
+          type: string
+        coverUrl:
+          type: string
+          format: uri
+    Book:
+      type: object
+      required: [id, title, authors]
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        authors:
+          type: array
+          items:
+            type: string
+        isbn13:
+          type: string
+        coverUrl:
+          type: string
+          format: uri
+    AddUserBookRequest:
+      type: object
+      required: [bookId]
+      properties:
+        bookId:
+          type: string
+          format: uuid
+    UserBook:
+      type: object
+      required: [bookId, state]
+      properties:
+        bookId:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum: [PENDING, READING, READ]
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        opinion:
+          type: string
+          maxLength: 1000
+    UpdateStateRequest:
+      type: object
+      required: [state]
+      properties:
+        state:
+          type: string
+          enum: [PENDING, READING, READ]
+    ReviewRequest:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        opinion:
+          type: string
+          maxLength: 1000
