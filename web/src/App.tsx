@@ -801,6 +801,8 @@ function App() {
       {avatarAccessResult ? (
         <section className="card">
           <h3>Avatar Access Response</h3>
+          <p>Placeholder: {avatarAccessResult.placeholder ? 'yes' : 'no'}</p>
+          <a href={avatarAccessResult.url} target="_blank" rel="noreferrer">Open avatar URL</a>
           <pre>{JSON.stringify(avatarAccessResult, null, 2)}</pre>
         </section>
       ) : null}
@@ -815,6 +817,8 @@ function App() {
       {coverAccessResult ? (
         <section className="card">
           <h3>Cover Access Response</h3>
+          <p>Placeholder: {coverAccessResult.placeholder ? 'yes' : 'no'}</p>
+          <a href={coverAccessResult.url} target="_blank" rel="noreferrer">Open cover URL</a>
           <pre>{JSON.stringify(coverAccessResult, null, 2)}</pre>
         </section>
       ) : null}

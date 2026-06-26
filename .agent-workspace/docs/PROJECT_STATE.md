@@ -3,8 +3,8 @@
 ## 1. Milestone Status
 *   **Current Milestone:** State 11 - Frontend Expansion (SPEC-0004/SPEC-0005)
 *   **Current Gate:** Frontend web+mobile implementado para SPEC-0001..SPEC-0005; validación técnica ejecutada (web build + mobile tsc).
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 17:05:00 +02:00
-*   **Commit Target:** `SPEC-0004: implement frontend reading lifecycle and reviews (web+mobile)`
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 17:12:00 +02:00
+*   **Commit Target:** `SPEC-0005: implement frontend media flows (web+mobile)`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -89,5 +89,5 @@
 *   **SPEC-0001 (frontend):** ✅ committed (`125e43d`)
 *   **SPEC-0002 (frontend):** ✅ committed (`1b4ed08`)
 *   **SPEC-0003 (frontend):** ✅ committed (`a08feae`)
-*   **SPEC-0004 (frontend):** ✅ implemented + validated, commit pending
+*   **SPEC-0004 (frontend):** ✅ committed (`6a9001a`)
 *   **SPEC-0005 (frontend):** ✅ implemented + validated, commit pending

@@ -239,3 +239,25 @@ aws.secretAccessKey=${AWS_SECRET_ACCESS_KEY}
 - CDN integration (CloudFront)
 - Version history (multi-generation media)
 - Analytics (upload frequency, storage usage)
+
+## 10. Frontend Implementation Steps (Web + Mobile)
+
+### 10.1 Web (React)
+- Implement avatar management UI:
+    - Upload image file via `POST /users/{userId}/avatar` (multipart/form-data).
+    - Fetch avatar access via `GET /users/{userId}/avatar`.
+    - Delete avatar via `DELETE /users/{userId}/avatar`.
+- Implement cover management UI:
+    - Upload image file via `POST /books/{bookId}/cover`.
+    - Fetch cover access via `GET /books/{bookId}/cover`.
+    - Delete cover via `DELETE /books/{bookId}/cover`.
+- Display returned presigned URL metadata (`expiresAt`, `placeholder`) for manual validation.
+
+### 10.2 Mobile (Expo React Native)
+- Implement avatar and cover API bindings for multipart upload and retrieval/deletion.
+- Provide development-oriented inputs for file URI, file name, and MIME type to execute media flows without additional native picker dependencies.
+- Render media access/upload response payloads to validate endpoint contracts.
+
+### 10.3 Validation
+- Web: execute `npm run build` in `web/`.
+- Mobile: execute TypeScript validation (`npx tsc --noEmit`) in `mobile/`.
