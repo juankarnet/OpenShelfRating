@@ -50,6 +50,24 @@ export interface BookStatsResponse {
   totalBooks: number
 }
 
+export interface UserBookResponse {
+  userBookId: string
+  book: BookSearchResponse
+  readingState: 'PENDING' | 'READING' | 'READ'
+  addedAt: string
+  startedReadingAt: string | null
+  completedReadingAt: string | null
+  rating?: number | null
+  opinion?: string | null
+}
+
+export interface UserLibraryStatsResponse {
+  totalBooks: number
+  pendingCount: number
+  readingCount: number
+  readCount: number
+}
+
 interface RegisterPayload {
   email: string
   password: string
@@ -184,6 +202,47 @@ export const catalogApi = {
       },
       token,
     ),
+}
+
+export const libraryApi = {
+  addBook: (userId: string, bookId: string, token: string) =>
+    request<UserBookResponse>(
+      `/users/${userId}/library`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ bookId }),
+      },
+      token,
+    ),
+
+  removeBook: (userId: string, bookId: string, token: string) =>
+    request<void>(
+      `/users/${userId}/library/${bookId}`,
+      {
+        method: 'DELETE',
+      },
+      token,
+    ),
+
+  list: (
+    userId: string,
+    token: string,
+    params: { state?: string; includeDeleted?: boolean; page?: number; size?: number },
+  ) => {
+    const query = new URLSearchParams()
+    if (params.state) query.set('state', params.state)
+    if (typeof params.includeDeleted === 'boolean') query.set('includeDeleted', String(params.includeDeleted))
+    query.set('page', String(params.page ?? 0))
+    query.set('size', String(params.size ?? 20))
+    return request<{ content?: UserBookResponse[] } | UserBookResponse[]>(
+      `/users/${userId}/library?${query.toString()}`,
+      undefined,
+      token,
+    )
+  },
+
+  stats: (userId: string, token: string) =>
+    request<UserLibraryStatsResponse>(`/users/${userId}/library/stats`, undefined, token),
 }
 
 export { ApiError, API_BASE_URL }

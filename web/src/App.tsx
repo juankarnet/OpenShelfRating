@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ApiError, API_BASE_URL, authApi, catalogApi } from './api'
-import type { AuthResponse, BookResponse, BookSearchResponse, UserProfileResponse } from './api'
+import { ApiError, API_BASE_URL, authApi, catalogApi, libraryApi } from './api'
+import type {
+  AuthResponse,
+  BookResponse,
+  BookSearchResponse,
+  UserBookResponse,
+  UserLibraryStatsResponse,
+  UserProfileResponse,
+} from './api'
 import './App.css'
 
 function App() {
@@ -33,6 +40,11 @@ function App() {
   const [createIsbn13, setCreateIsbn13] = useState('')
   const [createPublisher, setCreatePublisher] = useState('')
   const [createLanguage, setCreateLanguage] = useState('en')
+
+  const [libraryBookId, setLibraryBookId] = useState('')
+  const [libraryStateFilter, setLibraryStateFilter] = useState('')
+  const [libraryItems, setLibraryItems] = useState<UserBookResponse[]>([])
+  const [libraryStats, setLibraryStats] = useState<UserLibraryStatsResponse | null>(null)
 
   const effectiveUserId = useMemo(() => auth?.userId ?? profile?.userId ?? '', [auth, profile])
 
@@ -207,6 +219,75 @@ function App() {
     }
   }
 
+  const onLoadLibrary = async () => {
+    setError('')
+    setMessage('')
+    if (!effectiveUserId || !token) {
+      setError('Login required to load library.')
+      return
+    }
+    try {
+      const response = await libraryApi.list(effectiveUserId, token, {
+        state: libraryStateFilter || undefined,
+        page: 0,
+        size: 20,
+      })
+      const content = Array.isArray(response) ? response : (response.content ?? [])
+      setLibraryItems(content)
+      setMessage(`Library loaded: ${content.length} items.`)
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onAddBookToLibrary = async () => {
+    setError('')
+    setMessage('')
+    if (!effectiveUserId || !token) {
+      setError('Login required to add books to library.')
+      return
+    }
+    try {
+      await libraryApi.addBook(effectiveUserId, libraryBookId, token)
+      setMessage('Book added to library.')
+      await onLoadLibrary()
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onRemoveBookFromLibrary = async (bookId: string) => {
+    setError('')
+    setMessage('')
+    if (!effectiveUserId || !token) {
+      setError('Login required to remove books from library.')
+      return
+    }
+    try {
+      await libraryApi.removeBook(effectiveUserId, bookId, token)
+      setMessage('Book removed from library.')
+      await onLoadLibrary()
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onLoadLibraryStats = async () => {
+    setError('')
+    setMessage('')
+    if (!effectiveUserId || !token) {
+      setError('Login required to load library stats.')
+      return
+    }
+    try {
+      const response = await libraryApi.stats(effectiveUserId, token)
+      setLibraryStats(response)
+      setMessage('Library stats loaded.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
   return (
     <main className="spec-app">
       <header>
@@ -356,6 +437,26 @@ function App() {
           />
           <button type="submit">Create book</button>
         </form>
+
+        <div className="card">
+          <h2>My Library</h2>
+          <input
+            value={libraryBookId}
+            onChange={(event) => setLibraryBookId(event.target.value)}
+            placeholder="book id to add"
+          />
+          <input
+            value={libraryStateFilter}
+            onChange={(event) => setLibraryStateFilter(event.target.value)}
+            placeholder="state filter (PENDING/READING/READ)"
+          />
+          <button type="button" onClick={onAddBookToLibrary}>Add to library</button>
+          <button type="button" onClick={onLoadLibrary}>Load library</button>
+          <button type="button" onClick={onLoadLibraryStats}>Load library stats</button>
+          {libraryStats ? (
+            <pre>{JSON.stringify(libraryStats, null, 2)}</pre>
+          ) : null}
+        </div>
       </section>
 
       {auth ? (
@@ -376,6 +477,22 @@ function App() {
         <section className="card">
           <h3>Book Response</h3>
           <pre>{JSON.stringify(selectedBook, null, 2)}</pre>
+        </section>
+      ) : null}
+
+      {libraryItems.length > 0 ? (
+        <section className="card">
+          <h3>Library Items</h3>
+          <ul>
+            {libraryItems.map((item) => (
+              <li key={item.userBookId}>
+                <span>{item.book.title} ({item.readingState})</span>{' '}
+                <button type="button" onClick={() => onRemoveBookFromLibrary(item.book.bookId)}>
+                  Remove
+                </button>
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
 

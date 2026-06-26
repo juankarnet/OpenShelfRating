@@ -18,6 +18,7 @@ import {
   BookResponse,
   BookSearchResponse,
   catalogApi,
+  libraryApi,
   UserProfileResponse,
 } from './src/api'
 
@@ -48,6 +49,11 @@ export default function App() {
   const [createAuthor, setCreateAuthor] = useState('')
   const [createIsbn13, setCreateIsbn13] = useState('')
   const [createPublisher, setCreatePublisher] = useState('')
+
+  const [libraryBookId, setLibraryBookId] = useState('')
+  const [libraryStateFilter, setLibraryStateFilter] = useState('')
+  const [libraryItems, setLibraryItems] = useState<import('./src/api').UserBookResponse[]>([])
+  const [libraryStats, setLibraryStats] = useState<import('./src/api').UserLibraryStatsResponse | null>(null)
 
   const showError = (value: unknown) => {
     const payload = value as ApiErrorPayload
@@ -194,6 +200,75 @@ export default function App() {
     }
   }
 
+  const onLoadLibrary = async () => {
+    setError('')
+    setMessage('')
+    if (!auth?.token || !auth.userId) {
+      setError('Login required')
+      return
+    }
+    try {
+      const response = await libraryApi.list(auth.userId, auth.token, {
+        state: libraryStateFilter || undefined,
+        page: 0,
+        size: 20,
+      })
+      const content = Array.isArray(response) ? response : (response.content ?? [])
+      setLibraryItems(content)
+      setMessage(`Library loaded: ${content.length}`)
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onAddLibraryBook = async () => {
+    setError('')
+    setMessage('')
+    if (!auth?.token || !auth.userId) {
+      setError('Login required')
+      return
+    }
+    try {
+      await libraryApi.addBook(auth.userId, libraryBookId, auth.token)
+      setMessage('Book added to library')
+      await onLoadLibrary()
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onRemoveLibraryBook = async (bookId: string) => {
+    setError('')
+    setMessage('')
+    if (!auth?.token || !auth.userId) {
+      setError('Login required')
+      return
+    }
+    try {
+      await libraryApi.removeBook(auth.userId, bookId, auth.token)
+      setMessage('Book removed from library')
+      await onLoadLibrary()
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onLoadLibraryStats = async () => {
+    setError('')
+    setMessage('')
+    if (!auth?.token || !auth.userId) {
+      setError('Login required')
+      return
+    }
+    try {
+      const response = await libraryApi.stats(auth.userId, auth.token)
+      setLibraryStats(response)
+      setMessage('Library stats loaded')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -255,6 +330,22 @@ export default function App() {
           <TextInput style={styles.input} value={createIsbn13} onChangeText={setCreateIsbn13} placeholder="isbn13" />
           <TextInput style={styles.input} value={createPublisher} onChangeText={setCreatePublisher} placeholder="publisher" />
           <Button title="Create book" onPress={onCreateBook} />
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>My Library</Text>
+          <TextInput style={styles.input} value={libraryBookId} onChangeText={setLibraryBookId} placeholder="book id to add" />
+          <TextInput style={styles.input} value={libraryStateFilter} onChangeText={setLibraryStateFilter} placeholder="state filter" />
+          <Button title="Add to library" onPress={onAddLibraryBook} />
+          <Button title="Load library" onPress={onLoadLibrary} />
+          <Button title="Load library stats" onPress={onLoadLibraryStats} />
+          {libraryStats ? <Text selectable style={styles.code}>{JSON.stringify(libraryStats, null, 2)}</Text> : null}
+          {libraryItems.map((item) => (
+            <View key={item.userBookId} style={styles.row}>
+              <Text>{item.book.title} ({item.readingState})</Text>
+              <Button title="Remove" onPress={() => onRemoveLibraryBook(item.book.bookId)} />
+            </View>
+          ))}
         </View>
 
         {auth ? (
@@ -337,5 +428,9 @@ const styles = StyleSheet.create({
   link: {
     color: '#1b4d85',
     marginTop: 6,
+  },
+  row: {
+    marginTop: 8,
+    gap: 6,
   },
 })

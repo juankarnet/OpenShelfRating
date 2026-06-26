@@ -170,3 +170,20 @@ CREATE INDEX idx_user_books_state ON user_books(user_id, reading_state, deleted_
 - ✅ Soft delete preserves audit trail
 - ✅ NFR-001: List <500ms for 200+ books
 - ✅ Integration tests pass
+
+## 6. Frontend Implementation Steps (Web + Mobile)
+
+### 6.1 Web (React)
+- Implement personal library listing with filters (`state`, `includeDeleted`, `page`, `size`) via `GET /users/{userId}/library`.
+- Implement add-to-library flow via `POST /users/{userId}/library`.
+- Implement remove flow via `DELETE /users/{userId}/library/{bookId}` with confirmation.
+- Implement stats panel via `GET /users/{userId}/library/stats`.
+
+### 6.2 Mobile (Expo React Native)
+- Implement library list screen with state filters and paginated calls.
+- Implement add/remove actions bound to API endpoints.
+- Implement stats summary block for the current user.
+
+### 6.3 Validation
+- Web: execute `npm run build` in `web/`.
+- Mobile: execute TypeScript validation (`npx tsc --noEmit`) in `mobile/`.
