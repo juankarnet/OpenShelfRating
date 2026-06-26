@@ -1,10 +1,10 @@
 # Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 6 - SPEC-0003 Clarification & Readiness Gate
-*   **Current Gate:** SPEC-0002 closed as implemented; SPEC-0003 clarification decisions being consolidated before implementation.
+*   **Current Milestone:** State 7 - SPEC-0003 Implementation Baseline
+*   **Current Gate:** SPEC-0003 implemented and validation baseline completed (compile + tests).
 *   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26
-*   **Commit Target:** `SPEC-0003: resolve clarification decisions and implementation readiness`
+*   **Commit Target:** `SPEC-0003: implement personal library management baseline`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -21,13 +21,24 @@
 ## 4. Specification Status (MVP)
 *   **SPEC-0001:** ✅ Implemented
 *   **SPEC-0002:** ✅ Implemented (baseline committed)
-*   **SPEC-0003:** 🔄 Clarification in progress
+*   **SPEC-0003:** ✅ Implemented (baseline)
 *   **SPEC-0004:** 📋 Planned
 *   **SPEC-0005:** 📋 Planned
 
 ## 5. Completed Milestones
 *   **SPEC-0001:** Identity & Access implemented and compiled.
 *   **Specification Governance:** Standard folder model applied (`SPEC-000X/` + spec/technical plan split).
+*   **SPEC-0003 (Personal Library Management):**
+    - Implemented:
+      - Flyway migration `V3__create_user_library_tables.sql` with partial unique index for active rows.
+      - Domain model (`UserBook`, `ReadingState`).
+      - Repository (`UserBookRepository`) with filtering/search support.
+      - Service layer (`UserLibraryService`, `LibraryException`) with owner/admin authorization, soft delete, and reactivation behavior.
+      - API (`UserLibraryController`, DTOs, `LibraryExceptionHandler`) for add/remove/list/stats endpoints.
+      - Unit test baseline (`ReadingStateTest`).
+    - Validation:
+      - `./gradlew.bat compileJava` ✅
+      - `./gradlew.bat test` ✅
 
 ## 6. Completed Milestone (Latest)
 *   **SPEC-0002 (Global Book Catalog)**
@@ -50,4 +61,4 @@
 
 ## 8. Active Constraints
 *   Keep traceability between `REQ/NFR/AC/RULE` and implementation.
-*   SPEC-0003 implementation starts only after open clarification decisions are resolved in spec + technical plan.
+*   Keep specification and `PROJECT_STATE.md` status synchronized before each `SPEC-XXXX` commit.
