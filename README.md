@@ -22,6 +22,25 @@ Running services:
 | MinIO API (S3) | http://localhost:9000 | `minioadmin` | `minioadmin` | Bucket: `openshelfrating-media` |
 | MinIO Console | http://localhost:9001 | `minioadmin` | `minioadmin` | Web administration UI |
 
+## Environment Variables (Backend)
+| Variable | Default | Description |
+|---|---|---|
+| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/openshelfrating` | PostgreSQL JDBC URL |
+| `SPRING_DATASOURCE_USERNAME` | `osr_user` | PostgreSQL username |
+| `SPRING_DATASOURCE_PASSWORD` | `osr_password` | PostgreSQL password |
+| `APP_AUTH_JWT_EXPIRATION_HOURS` | `24` | JWT RS256 expiration in hours |
+| `APP_AUTH_VERIFICATION_EXPIRATION_HOURS` | `24` | Email verification token expiration in hours |
+| `APP_AUTH_BASE_URL` | `http://localhost:8080` | Base URL used in verification links |
+| `APP_AUTH_JWT_PRIVATE_KEY_PEM` | *(empty)* | RSA private key PEM for JWT signing (optional in local) |
+| `APP_AUTH_JWT_PUBLIC_KEY_PEM` | *(empty)* | RSA public key PEM for JWT verification (optional in local) |
+| `SPRING_MAIL_HOST` | `localhost` | SMTP host for verification emails |
+| `SPRING_MAIL_PORT` | `1025` | SMTP port for local MailHog/MailDev |
+| `SPRING_MAIL_USERNAME` | *(empty)* | SMTP username |
+| `SPRING_MAIL_PASSWORD` | *(empty)* | SMTP password |
+| `SPRING_MAIL_SMTP_AUTH` | `false` | Enables SMTP authentication |
+| `SPRING_MAIL_SMTP_STARTTLS_ENABLE` | `false` | Enables STARTTLS |
+| `APP_MAIL_FROM` | `no-reply@openshelfrating.local` | Sender email used for auth notifications |
+
 2. Start backend (requires JDK 21):
 ```powershell
 cd backend

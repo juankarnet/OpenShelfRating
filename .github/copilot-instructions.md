@@ -37,6 +37,11 @@
 *   Do not restate global policy inside milestone or agent files unless the rule is operationally different.
 *   Prefer pointers to source-of-truth documents over copied content.
 
+## Environment Variable Documentation Rule
+*   Whenever a new environment variable is added, updated, or removed in code/configuration, update the corresponding section in `README.md` of the project root in the same change.
+*   Keep variable purpose, default values (if any), and local-development examples synchronized with actual runtime behavior.
+*   Do not leave undocumented environment variables in backend, web, mobile, or infra modules.
+
 ## Snapshot Discipline
 *   Keep project-wide mutable state in `.agent-workspace/docs/PROJECT_STATE.md` only.
 *   Agent files may reference the snapshot, but must not duplicate its current state.

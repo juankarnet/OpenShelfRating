@@ -1,10 +1,10 @@
 # Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 1 - Specification Baseline
-*   **Current Gate:** Functional Specifications generated and locked
-*   **Last Sync:** [SYNC: APPLICATION_CONTEXT.md] 2026-06-25
-*   **Commit Target:** `status(spec): functional-specifications-baselined`
+*   **Current Milestone:** State 2 - SPEC-0001 Backend Implementation Complete
+*   **Current Gate:** SPEC-0001 (Identity & Access Management) implementation verified
+*   **Last Sync:** [SYNC: SPEC-0001.md] 2026-06-26
+*   **Commit Target:** `feat(auth): implement SPEC-0001 - identity & access management with JWT RS256 and email verification`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -30,3 +30,15 @@
 ## 5. Active Constraints
 *   **Policy Source:** `.github/copilot-instructions.md`
 *   **Gate Validation:** `.agent-workspace/scripts/validate-gates.ps1`
+
+## 6. Implementation Milestones Completed
+*   **SPEC-0001 (Identity & Access Management)** — ✅ Completed 2026-06-26
+    - Domain entities: `UserAccount`, `EmailVerificationToken`, `UserRole`
+    - Services: Auth, JWT, Email verification, Password validation
+    - API endpoints: Register, Login, Verify Email, Get Profile, Update Profile
+    - Database schema: Flyway V1 migration with users + email_verification_tokens
+    - JWT: RS256 with 24h expiration (ephemeral or PEM-configurable)
+    - Email verification: 24h token expiration, one-time use
+    - Password policy: 8+ chars, uppercase, number, special character
+    - Build: Spring Mail + Spring Security OAuth2 dependencies added
+    - Status: Zero compilation errors, ready for runtime testing with PostgreSQL + MailHog

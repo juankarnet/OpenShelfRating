@@ -14,7 +14,7 @@
 *   **Backend Ecosystem:**
 	*   *Language/Runtime:* Java 21 LTS
 	*   *Framework:* Spring Boot 3.x (Spring Web, Spring Data JPA, Spring Security, Spring Cloud AWS)
-	*   *Build Tool:* Maven (multi-module structure)
+	*   *Build Tool:* Gradle (Kotlin DSL + Wrapper)
 *   **Frontend Stack:** React 18 + Vite + TypeScript; React Router for navigation; TanStack Query for server state; Axios/openapi-generated client.
 *   **Mobile Stack:** React Native (Expo) + TypeScript; same API client as web; EAS Build for automated compilation.
 *   **Database & Persistence:** PostgreSQL 15+; Hibernate JPA + Spring Data repositories; Flyway migrations.
@@ -29,7 +29,7 @@
 
 ## 4. Infrastructure & CI/CD Pipelines
 *   **Local Dev Sandbox:** Docker Compose (PostgreSQL, MinIO, backend Spring Boot app); React Vite dev server; React Native Expo CLI.
-*   **Test Execution:** Backend: `mvn test` (unit) + `mvn verify` (integration with Testcontainers); Web: `npm run test` (Vitest); Mobile: `npm run test:e2e` (Detox).
+*   **Test Execution:** Backend: `./gradlew test` (unit) + `./gradlew check` (integration/test suite); Web: `npm run test` (Vitest); Mobile: `npm run test:e2e` (Detox).
 *   **Build & Containerization:** Multi-stage Dockerfile for Java app; slim base images; non-root user execution.
 *   **Quality Gates:** Backend unit ≥80% coverage (JaCoCo), all business rules integration-tested; Frontend ≥70% component coverage; E2E critical paths automated; zero high-severity security issues; OpenAPI schema validation.
 *   **CI/CD Stages:** Lint → Build → Unit Test → Integration Test → Contract Test → Build Artifact (Docker image) → Push to Registry → Deploy staging → E2E on staging → Deploy production.
