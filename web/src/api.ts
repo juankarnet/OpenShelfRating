@@ -17,6 +17,39 @@ export interface UserProfileResponse {
   emailVerified: boolean
 }
 
+export interface BookSearchResponse {
+  bookId: string
+  title: string
+  primaryAuthor: string
+  coverUrl: string | null
+}
+
+export interface BooksPagedResponse {
+  books: BookSearchResponse[]
+  page: number
+  size: number
+  totalCount: number
+}
+
+export interface BookResponse {
+  bookId: string
+  title: string
+  primaryAuthor: string
+  isbn13: string | null
+  isbn10: string | null
+  publisher: string | null
+  publicationDate: string | null
+  pages: number | null
+  language: string
+  coverUrl: string | null
+  createdBy: string
+  isCanonical: boolean
+}
+
+export interface BookStatsResponse {
+  totalBooks: number
+}
+
 interface RegisterPayload {
   email: string
   password: string
@@ -30,6 +63,15 @@ interface LoginPayload {
 
 interface UpdateProfilePayload {
   displayName: string
+}
+
+interface CreateBookPayload {
+  title: string
+  primaryAuthor: string
+  isbn13?: string
+  isbn10?: string
+  publisher?: string
+  language?: string
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080'
@@ -109,6 +151,36 @@ export const authApi = {
       {
         method: 'PUT',
         body: JSON.stringify(payload),
+      },
+      token,
+    ),
+}
+
+export const catalogApi = {
+  search: (query: string, page = 0, size = 20) =>
+    request<BooksPagedResponse>(
+      `/books/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`,
+    ),
+
+  getById: (bookId: string) => request<BookResponse>(`/books/${bookId}`),
+
+  create: (payload: CreateBookPayload, token: string) =>
+    request<BookResponse>(
+      '/books',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      token,
+    ),
+
+  stats: () => request<BookStatsResponse>('/books/stats'),
+
+  markCanonical: (bookId: string, dedupBookId: string, token: string) =>
+    request<void>(
+      `/books/${bookId}/mark-canonical?dedupBookId=${encodeURIComponent(dedupBookId)}`,
+      {
+        method: 'PATCH',
       },
       token,
     ),

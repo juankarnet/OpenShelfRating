@@ -418,6 +418,25 @@ app.catalog.isbn-validation-strict=true
 
 *   **Spec:** See `SPEC-0002.md` in this directory
 *   **SPEC-0001:** Identity & Access Management (dependency for created_by FK)
+
+## 11. Frontend Implementation Steps (Web + Mobile)
+
+### 11.1 Web (React)
+- Implement catalog search UI bound to `GET /books/search` with query + pagination controls.
+- Implement detail retrieval by id using `GET /books/{id}`.
+- Implement create book form using `POST /books` and optimistic refresh of search results.
+- Implement stats panel with `GET /books/stats`.
+- Implement admin canonical action trigger through `PATCH /books/{id}/mark-canonical`.
+
+### 11.2 Mobile (Expo React Native)
+- Implement searchable catalog list with debounced query against `GET /books/search`.
+- Implement detail fetch by id and display metadata in a dedicated block.
+- Implement create book action for development/admin scenarios.
+- Implement lightweight catalog stats block from `GET /books/stats`.
+
+### 11.3 Validation
+- Web: execute `npm run build` in `web/`.
+- Mobile: execute TypeScript validation (`npx tsc --noEmit`) in `mobile/`.
 *   **SPEC-0003:** Personal Library (consumes books)
 *   **ISBN Standards:** ISO 2108 (ISBN-13), ISBN-10 validation
 *   **PostgreSQL Full-Text Search:** https://www.postgresql.org/docs/current/textsearch.html

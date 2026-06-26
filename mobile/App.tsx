@@ -2,6 +2,7 @@ import { StatusBar } from 'expo-status-bar'
 import { useState } from 'react'
 import {
   Button,
+  Pressable,
   SafeAreaView,
   ScrollView,
   StyleSheet,
@@ -9,7 +10,16 @@ import {
   TextInput,
   View,
 } from 'react-native'
-import { ApiErrorPayload, API_BASE_URL, authApi, AuthResponse, UserProfileResponse } from './src/api'
+import {
+  ApiErrorPayload,
+  API_BASE_URL,
+  authApi,
+  AuthResponse,
+  BookResponse,
+  BookSearchResponse,
+  catalogApi,
+  UserProfileResponse,
+} from './src/api'
 
 export default function App() {
   const [auth, setAuth] = useState<AuthResponse | null>(null)
@@ -26,6 +36,18 @@ export default function App() {
 
   const [verifyToken, setVerifyToken] = useState('')
   const [newDisplayName, setNewDisplayName] = useState('')
+
+  const [catalogQuery, setCatalogQuery] = useState('')
+  const [catalogPage, setCatalogPage] = useState('0')
+  const [catalogResults, setCatalogResults] = useState<BookSearchResponse[]>([])
+  const [catalogStats, setCatalogStats] = useState<number | null>(null)
+  const [selectedBookId, setSelectedBookId] = useState('')
+  const [selectedBook, setSelectedBook] = useState<BookResponse | null>(null)
+
+  const [createTitle, setCreateTitle] = useState('')
+  const [createAuthor, setCreateAuthor] = useState('')
+  const [createIsbn13, setCreateIsbn13] = useState('')
+  const [createPublisher, setCreatePublisher] = useState('')
 
   const showError = (value: unknown) => {
     const payload = value as ApiErrorPayload
@@ -111,6 +133,67 @@ export default function App() {
     }
   }
 
+  const onSearchCatalog = async () => {
+    setError('')
+    setMessage('')
+    try {
+      const response = await catalogApi.search(catalogQuery, Number(catalogPage || '0'), 20)
+      setCatalogResults(response.books)
+      setMessage(`Catalog results: ${response.books.length}`)
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onLoadBook = async () => {
+    setError('')
+    setMessage('')
+    try {
+      const response = await catalogApi.getById(selectedBookId)
+      setSelectedBook(response)
+      setMessage('Book loaded')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onCreateBook = async () => {
+    setError('')
+    setMessage('')
+    if (!auth?.token) {
+      setError('Login required')
+      return
+    }
+    try {
+      const response = await catalogApi.create(
+        {
+          title: createTitle,
+          primaryAuthor: createAuthor,
+          isbn13: createIsbn13 || undefined,
+          publisher: createPublisher || undefined,
+          language: 'en',
+        },
+        auth.token,
+      )
+      setSelectedBook(response)
+      setMessage('Book created/returned')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onLoadCatalogStats = async () => {
+    setError('')
+    setMessage('')
+    try {
+      const response = await catalogApi.stats()
+      setCatalogStats(response.totalBooks)
+      setMessage('Catalog stats loaded')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
@@ -145,6 +228,35 @@ export default function App() {
           <Button title="Update profile" onPress={onUpdateProfile} />
         </View>
 
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Catalog Search</Text>
+          <TextInput style={styles.input} value={catalogQuery} onChangeText={setCatalogQuery} placeholder="title, author, isbn" />
+          <TextInput style={styles.input} value={catalogPage} onChangeText={setCatalogPage} placeholder="page" keyboardType="numeric" />
+          <Button title="Search catalog" onPress={onSearchCatalog} />
+          <Button title="Load stats" onPress={onLoadCatalogStats} />
+          {catalogStats !== null ? <Text>Total books: {catalogStats}</Text> : null}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Catalog Detail</Text>
+          <TextInput style={styles.input} value={selectedBookId} onChangeText={setSelectedBookId} placeholder="book id" />
+          <Button title="Get book by id" onPress={onLoadBook} />
+          {catalogResults.map((book) => (
+            <Pressable key={book.bookId} onPress={() => setSelectedBookId(book.bookId)}>
+              <Text style={styles.link}>{book.title} - {book.primaryAuthor}</Text>
+            </Pressable>
+          ))}
+        </View>
+
+        <View style={styles.card}>
+          <Text style={styles.cardTitle}>Create Book</Text>
+          <TextInput style={styles.input} value={createTitle} onChangeText={setCreateTitle} placeholder="title" />
+          <TextInput style={styles.input} value={createAuthor} onChangeText={setCreateAuthor} placeholder="author" />
+          <TextInput style={styles.input} value={createIsbn13} onChangeText={setCreateIsbn13} placeholder="isbn13" />
+          <TextInput style={styles.input} value={createPublisher} onChangeText={setCreatePublisher} placeholder="publisher" />
+          <Button title="Create book" onPress={onCreateBook} />
+        </View>
+
         {auth ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Session</Text>
@@ -156,6 +268,13 @@ export default function App() {
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Profile Response</Text>
             <Text selectable style={styles.code}>{JSON.stringify(profile, null, 2)}</Text>
+          </View>
+        ) : null}
+
+        {selectedBook ? (
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Book Response</Text>
+            <Text selectable style={styles.code}>{JSON.stringify(selectedBook, null, 2)}</Text>
           </View>
         ) : null}
 
@@ -214,5 +333,9 @@ const styles = StyleSheet.create({
   err: {
     color: '#b42318',
     fontWeight: '600',
+  },
+  link: {
+    color: '#1b4d85',
+    marginTop: 6,
   },
 })

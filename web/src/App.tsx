@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
-import { ApiError, API_BASE_URL, authApi } from './api'
-import type { AuthResponse, UserProfileResponse } from './api'
+import { ApiError, API_BASE_URL, authApi, catalogApi } from './api'
+import type { AuthResponse, BookResponse, BookSearchResponse, UserProfileResponse } from './api'
 import './App.css'
 
 function App() {
@@ -20,6 +20,19 @@ function App() {
 
   const [verificationToken, setVerificationToken] = useState('')
   const [newDisplayName, setNewDisplayName] = useState('')
+
+  const [catalogQuery, setCatalogQuery] = useState('')
+  const [catalogResults, setCatalogResults] = useState<BookSearchResponse[]>([])
+  const [catalogPage, setCatalogPage] = useState(0)
+  const [selectedBookId, setSelectedBookId] = useState('')
+  const [selectedBook, setSelectedBook] = useState<BookResponse | null>(null)
+  const [catalogStats, setCatalogStats] = useState<number | null>(null)
+
+  const [createTitle, setCreateTitle] = useState('')
+  const [createAuthor, setCreateAuthor] = useState('')
+  const [createIsbn13, setCreateIsbn13] = useState('')
+  const [createPublisher, setCreatePublisher] = useState('')
+  const [createLanguage, setCreateLanguage] = useState('en')
 
   const effectiveUserId = useMemo(() => auth?.userId ?? profile?.userId ?? '', [auth, profile])
 
@@ -131,6 +144,69 @@ function App() {
     }
   }
 
+  const onSearchCatalog = async (event: FormEvent) => {
+    event.preventDefault()
+    setError('')
+    setMessage('')
+    try {
+      const response = await catalogApi.search(catalogQuery, catalogPage, 20)
+      setCatalogResults(response.books)
+      setMessage(`Catalog results: ${response.books.length}`)
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onLoadBook = async () => {
+    setError('')
+    setMessage('')
+    try {
+      const response = await catalogApi.getById(selectedBookId)
+      setSelectedBook(response)
+      setMessage('Book loaded.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onCreateBook = async (event: FormEvent) => {
+    event.preventDefault()
+    setError('')
+    setMessage('')
+    if (!token) {
+      setError('Login required to create books.')
+      return
+    }
+    try {
+      const response = await catalogApi.create(
+        {
+          title: createTitle,
+          primaryAuthor: createAuthor,
+          isbn13: createIsbn13 || undefined,
+          publisher: createPublisher || undefined,
+          language: createLanguage || 'en',
+        },
+        token,
+      )
+      setSelectedBook(response)
+      setMessage('Book created/returned from deduplication.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
+  const onLoadCatalogStats = async () => {
+    setError('')
+    setMessage('')
+    try {
+      const response = await catalogApi.stats()
+      setCatalogStats(response.totalBooks)
+      setMessage('Catalog stats loaded.')
+    } catch (value) {
+      showError(value)
+    }
+  }
+
   return (
     <main className="spec-app">
       <header>
@@ -208,6 +284,78 @@ function App() {
           />
           <button type="submit">Update profile</button>
         </form>
+
+        <form className="card" onSubmit={onSearchCatalog}>
+          <h2>Catalog Search</h2>
+          <input
+            value={catalogQuery}
+            onChange={(event) => setCatalogQuery(event.target.value)}
+            placeholder="title, author or isbn"
+          />
+          <input
+            value={String(catalogPage)}
+            onChange={(event) => setCatalogPage(Number(event.target.value || 0))}
+            type="number"
+            min={0}
+            placeholder="page"
+          />
+          <button type="submit">Search catalog</button>
+          <button type="button" onClick={onLoadCatalogStats}>Load stats</button>
+          {catalogStats !== null ? <p>Total books: {catalogStats}</p> : null}
+        </form>
+
+        <div className="card">
+          <h2>Catalog Detail</h2>
+          <input
+            value={selectedBookId}
+            onChange={(event) => setSelectedBookId(event.target.value)}
+            placeholder="book id"
+          />
+          <button type="button" onClick={onLoadBook}>Get book by id</button>
+          {catalogResults.length > 0 ? (
+            <ul>
+              {catalogResults.map((book) => (
+                <li key={book.bookId}>
+                  <button type="button" onClick={() => setSelectedBookId(book.bookId)}>
+                    {book.title} - {book.primaryAuthor}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
+
+        <form className="card" onSubmit={onCreateBook}>
+          <h2>Create Book</h2>
+          <input
+            value={createTitle}
+            onChange={(event) => setCreateTitle(event.target.value)}
+            placeholder="title"
+            required
+          />
+          <input
+            value={createAuthor}
+            onChange={(event) => setCreateAuthor(event.target.value)}
+            placeholder="primary author"
+            required
+          />
+          <input
+            value={createIsbn13}
+            onChange={(event) => setCreateIsbn13(event.target.value)}
+            placeholder="isbn13 (optional)"
+          />
+          <input
+            value={createPublisher}
+            onChange={(event) => setCreatePublisher(event.target.value)}
+            placeholder="publisher"
+          />
+          <input
+            value={createLanguage}
+            onChange={(event) => setCreateLanguage(event.target.value)}
+            placeholder="language"
+          />
+          <button type="submit">Create book</button>
+        </form>
       </section>
 
       {auth ? (
@@ -221,6 +369,13 @@ function App() {
         <section className="card">
           <h3>Profile Response</h3>
           <pre>{JSON.stringify(profile, null, 2)}</pre>
+        </section>
+      ) : null}
+
+      {selectedBook ? (
+        <section className="card">
+          <h3>Book Response</h3>
+          <pre>{JSON.stringify(selectedBook, null, 2)}</pre>
         </section>
       ) : null}
 

@@ -17,6 +17,39 @@ export interface UserProfileResponse {
   emailVerified: boolean
 }
 
+export interface BookSearchResponse {
+  bookId: string
+  title: string
+  primaryAuthor: string
+  coverUrl: string | null
+}
+
+export interface BooksPagedResponse {
+  books: BookSearchResponse[]
+  page: number
+  size: number
+  totalCount: number
+}
+
+export interface BookResponse {
+  bookId: string
+  title: string
+  primaryAuthor: string
+  isbn13: string | null
+  isbn10: string | null
+  publisher: string | null
+  publicationDate: string | null
+  pages: number | null
+  language: string
+  coverUrl: string | null
+  createdBy: string
+  isCanonical: boolean
+}
+
+export interface BookStatsResponse {
+  totalBooks: number
+}
+
 export interface ApiErrorPayload {
   status: number
   message: string
@@ -89,6 +122,34 @@ export const authApi = {
       },
       token,
     ),
+}
+
+export const catalogApi = {
+  search: (query: string, page = 0, size = 20) =>
+    request<BooksPagedResponse>(
+      `/books/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`,
+    ),
+  getById: (bookId: string) => request<BookResponse>(`/books/${bookId}`),
+  create: (
+    payload: {
+      title: string
+      primaryAuthor: string
+      isbn13?: string
+      isbn10?: string
+      publisher?: string
+      language?: string
+    },
+    token: string,
+  ) =>
+    request<BookResponse>(
+      '/books',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      token,
+    ),
+  stats: () => request<BookStatsResponse>('/books/stats'),
 }
 
 export { API_BASE_URL }
