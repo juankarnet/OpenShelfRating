@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -76,5 +77,39 @@ public class UserLibraryController {
             @AuthenticationPrincipal UUID principalUserId
     ) {
         return userLibraryService.getLibraryStats(userId, principalUserId);
+    }
+
+    @PutMapping("/{userBookId}/state")
+    public ResponseEntity<UserBookResponse> transitionReadingState(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UUID principalUserId,
+            @PathVariable UUID userBookId,
+            @Valid @RequestBody TransitionReadingStateRequest request
+    ) {
+        UserBookResponse response = userLibraryService.transitionReadingState(
+                userId,
+                principalUserId,
+                userBookId,
+                request.nextState(),
+                request.readDate()
+        );
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/{userBookId}/review")
+    public ResponseEntity<UserBookResponse> updateReview(
+            @PathVariable UUID userId,
+            @AuthenticationPrincipal UUID principalUserId,
+            @PathVariable UUID userBookId,
+            @Valid @RequestBody UpdateReviewRequest request
+    ) {
+        UserBookResponse response = userLibraryService.updateReview(
+                userId,
+                principalUserId,
+                userBookId,
+                request.rating(),
+                request.opinion()
+        );
+        return ResponseEntity.ok(response);
     }
 }

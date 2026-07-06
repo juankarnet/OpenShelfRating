@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -138,10 +139,107 @@ public class UserLibraryService {
         long readingCount = userBookRepository.countByUserIdAndReadingStateAndDeletedAtIsNull(pathUserId, ReadingState.READING);
         long readCount = userBookRepository.countByUserIdAndReadingStateAndDeletedAtIsNull(pathUserId, ReadingState.READ);
 
-        return new UserLibraryStatsResponse(totalBooks, pendingCount, readingCount, readCount);
+        // Calculate average rating of books that have been rated
+        double averageRating = userBookRepository.findByUserIdAndDeletedAtIsNull(pathUserId).stream()
+                .filter(userBook -> userBook.getRating() != null)
+                .mapToInt(userBook -> userBook.getRating())
+                .average()
+                .orElse(0.0);
+
+        var stateDistribution = new UserLibraryStatsResponse.StateDistribution(
+                pendingCount,
+                readingCount,
+                readCount
+        );
+
+        return new UserLibraryStatsResponse(totalBooks, stateDistribution, averageRating);
     }
 
-    private void authorizeAccess(UUID pathUserId, UUID principalUserId) {
+    public UserBookResponse transitionReadingState(
+            UUID pathUserId,
+            UUID principalUserId,
+            UUID userBookId,
+            ReadingState nextState,
+            String readDateStr
+    ) {
+        authorizeAccess(pathUserId, principalUserId);
+
+        UserBook userBook = userBookRepository.findById(userBookId)
+                .orElseThrow(() -> new LibraryException(HttpStatus.NOT_FOUND, "Book not found in user library"));
+
+        if (!userBook.getUser().getId().equals(pathUserId)) {
+            throw new LibraryException(HttpStatus.FORBIDDEN, "Cannot modify another user's library");
+        }
+
+        // Validate state transition
+        ReadingState currentState = userBook.getReadingState();
+        if (!isValidStateTransition(currentState, nextState)) {
+            throw new LibraryException(HttpStatus.BAD_REQUEST, "Invalid state transition");
+        }
+
+        userBook.setReadingState(nextState);
+
+        // Set timestamps based on state
+        OffsetDateTime now = OffsetDateTime.now();
+        if (nextState == ReadingState.READING) {
+            userBook.setStartedReadingAt(now);
+        } else if (nextState == ReadingState.READ) {
+            if (readDateStr != null && !readDateStr.isBlank()) {
+                try {
+                    LocalDate readDate = LocalDate.parse(readDateStr);
+                    userBook.setCompletedReadingAt(readDate.atStartOfDay().atOffset(OffsetDateTime.now().getOffset()));
+                } catch (Exception e) {
+                    userBook.setCompletedReadingAt(now);
+                }
+            } else {
+                userBook.setCompletedReadingAt(now);
+            }
+        }
+
+        userBook = userBookRepository.save(userBook);
+        return toResponse(userBook);
+    }
+
+    public UserBookResponse updateReview(
+            UUID pathUserId,
+            UUID principalUserId,
+            UUID userBookId,
+            Integer rating,
+            String opinion
+    ) {
+        authorizeAccess(pathUserId, principalUserId);
+
+        UserBook userBook = userBookRepository.findById(userBookId)
+                .orElseThrow(() -> new LibraryException(HttpStatus.NOT_FOUND, "Book not found in user library"));
+
+        if (!userBook.getUser().getId().equals(pathUserId)) {
+            throw new LibraryException(HttpStatus.FORBIDDEN, "Cannot modify another user's library");
+        }
+
+        if (userBook.getReadingState() != ReadingState.READ) {
+            throw new LibraryException(HttpStatus.BAD_REQUEST, "Can only rate books that have been read");
+        }
+
+        userBook.setRating(rating);
+        userBook.setOpinion(opinion);
+        userBook.setReviewUpdatedAt(OffsetDateTime.now());
+
+        userBook = userBookRepository.save(userBook);
+        return toResponse(userBook);
+    }
+
+    private boolean isValidStateTransition(ReadingState from, ReadingState to) {
+        switch (from) {
+            case PENDING:
+                return to == ReadingState.READING || to == ReadingState.PENDING;
+            case READING:
+                return to == ReadingState.READ || to == ReadingState.PENDING;
+            case READ:
+                return to == ReadingState.READING || to == ReadingState.PENDING;
+            default:
+                return false;
+        }
+    }
         UUID effectivePrincipal = principalUserId != null ? principalUserId : pathUserId;
 
         UserAccount requester = userAccountRepository.findById(effectivePrincipal)

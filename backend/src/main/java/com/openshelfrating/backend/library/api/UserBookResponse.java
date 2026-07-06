@@ -7,9 +7,9 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 public record UserBookResponse(
-        UUID userBookId,
+        UUID id,
         BookSearchResponse book,
-        ReadingState readingState,
+        ReadingState state,
         OffsetDateTime addedAt,
         OffsetDateTime startedReadingAt,
         OffsetDateTime completedReadingAt,
