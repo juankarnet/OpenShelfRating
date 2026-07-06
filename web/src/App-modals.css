@@ -1,0 +1,149 @@
+/* ===============================================
+   Modal Components & Interactive Elements (Phase 4-5)
+   =============================================== */
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 20px;
+  justify-content: flex-end;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.radio-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background 0.15s;
+  margin-bottom: 6px;
+}
+
+.radio-label:hover {
+  background: var(--color-border-light);
+}
+
+.radio-label input[type="radio"] {
+  cursor: pointer;
+}
+
+/* ===============================================
+   Star Rating Component
+   =============================================== */
+
+.star-rating {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.star-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 1.5rem;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.star-btn:hover {
+  color: var(--color-warning);
+  border-color: var(--color-warning);
+}
+
+.star-btn.active {
+  color: var(--color-warning);
+  background: #fef3c7;
+  border-color: var(--color-warning);
+}
+
+.star-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.rating-display {
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  display: block;
+}
+
+/* ===============================================
+   Textarea Styles
+   =============================================== */
+
+.form-input[type="textarea"],
+textarea.form-input {
+  font-family: inherit;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  padding: 10px 12px;
+}
+
+/* ===============================================
+   Library Page Styles
+   =============================================== */
+
+.dashboard-page,
+.library-page {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin: 0 0 16px 0;
+  color: var(--color-text);
+}
+
+.library-filters {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+
+/* ===============================================
+   Page Container
+   =============================================== */
+
+.page {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin: 0 auto;
+  padding: var(--content-padding);
+}
+
+@media (max-width: 768px) {
+  .page-title {
+    font-size: 1.4rem;
+  }
+
+  .library-filters {
+    padding: 12px;
+  }
+
+  .modal-box {
+    width: 90%;
+    max-width: 400px;
+    padding: 20px;
+  }
+
+  .star-rating {
+    gap: 6px;
+  }
+
+  .star-btn {
+    padding: 6px 10px;
+    font-size: 1.2rem;
+  }
+}
