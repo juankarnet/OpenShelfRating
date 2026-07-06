@@ -1,0 +1,359 @@
+/* ================================================
+   Add Book Page Styles (SPEC-0006 REQ-012)
+   ================================================ */
+
+.add-book-page {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.add-book-container {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* -----------------------------------------------
+   Section Layout
+   ----------------------------------------------- */
+.search-section,
+.manual-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+.section-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  color: var(--color-text);
+}
+
+/* -----------------------------------------------
+   Search Form
+   ----------------------------------------------- */
+.search-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.input-with-button {
+  display: flex;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.input-with-button .form-input {
+  flex: 1;
+}
+
+.input-with-button .btn {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.85rem;
+}
+
+/* -----------------------------------------------
+   Search Results
+   ----------------------------------------------- */
+.search-results {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--color-border-light);
+  border-radius: var(--radius-md);
+}
+
+.results-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  margin: 0;
+}
+
+.results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.result-item {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  background: var(--color-surface);
+  border: 2px solid transparent;
+  border-radius: var(--radius-md);
+  transition: border-color 0.15s, background 0.15s;
+  cursor: pointer;
+}
+
+.result-item:hover {
+  background: var(--color-border-light);
+  border-color: var(--color-primary);
+}
+
+.result-item.selected {
+  background: #eff6ff;
+  border-color: var(--color-primary);
+}
+
+.result-cover {
+  width: 50px;
+  height: 75px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--color-border);
+}
+
+.result-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.result-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0 0 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-author {
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* -----------------------------------------------
+   Selected Book
+   ----------------------------------------------- */
+.selected-book {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  padding: 16px;
+  background: linear-gradient(135deg, #eff6ff, #f0fdf4);
+  border: 2px solid var(--color-primary);
+  border-radius: var(--radius-md);
+  position: relative;
+}
+
+.selected-badge {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+  background: var(--color-success);
+  color: #fff;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.selected-content {
+  display: flex;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-content img {
+  width: 60px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  background: var(--color-border);
+  flex-shrink: 0;
+}
+
+.selected-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.selected-info h4 {
+  margin: 0 0 4px;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selected-info p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.selected-book .btn-link {
+  flex-shrink: 0;
+  margin-top: -4px;
+}
+
+/* -----------------------------------------------
+   Manual Entry Form
+   ----------------------------------------------- */
+.book-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.form-row .form-group {
+  margin: 0;
+}
+
+.required {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}
+
+.form-actions .btn {
+  min-width: 120px;
+}
+
+/* -----------------------------------------------
+   Responsive
+   ----------------------------------------------- */
+@media (max-width: 640px) {
+  .add-book-page {
+    max-width: 100%;
+  }
+
+  .add-book-container {
+    gap: 16px;
+  }
+
+  .search-section,
+  .manual-section {
+    padding: 16px;
+  }
+
+  .input-with-button {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input-with-button .btn {
+    width: 100%;
+  }
+
+  .result-item {
+    flex-wrap: wrap;
+  }
+
+  .result-cover {
+    order: 1;
+    width: 100%;
+    height: 150px;
+  }
+
+  .result-info {
+    order: 2;
+    width: 100%;
+    flex: none;
+  }
+
+  .result-item .btn {
+    order: 3;
+    width: 100%;
+  }
+
+  .selected-book {
+    flex-direction: column;
+    padding: 16px;
+  }
+
+  .selected-content {
+    width: 100%;
+  }
+
+  .selected-content img {
+    width: 100px;
+    height: 150px;
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  .results-list {
+    max-height: 250px;
+  }
+}
+
+@media (max-width: 400px) {
+  .search-section,
+  .manual-section {
+    padding: 12px;
+  }
+
+  .result-item {
+    padding: 8px;
+    gap: 8px;
+  }
+
+  .result-cover {
+    width: 40px;
+    height: 60px;
+  }
+
+  .result-title {
+    font-size: 0.85rem;
+  }
+
+  .result-author {
+    font-size: 0.75rem;
+  }
+
+  .selected-content img {
+    width: 60px;
+    height: 90px;
+  }
+}
