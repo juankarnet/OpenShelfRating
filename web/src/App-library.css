@@ -18,6 +18,15 @@
   box-shadow: var(--shadow-md);
 }
 
+.book-card--clickable {
+  cursor: pointer;
+}
+
+.book-card--clickable:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .book-card-cover {
   flex-shrink: 0;
   width: 60px;

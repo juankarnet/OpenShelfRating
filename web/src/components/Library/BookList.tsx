@@ -14,7 +14,7 @@ interface BookListProps {
   onChangeState?: (bookId: string) => void;
   onEditRating?: (bookId: string) => void;
   onRemove?: (bookId: string) => void;
-  onViewDetails?: (bookId: string) => void;
+  onViewDetails?: (book: UserBook) => void;
   onManageCover?: (bookId: string) => void;
   className?: string;
 }

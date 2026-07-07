@@ -12,7 +12,7 @@ interface BookCardProps {
   onChangeState?: (bookId: string) => void;
   onEditRating?: (bookId: string) => void;
   onRemove?: (bookId: string) => void;
-  onViewDetails?: (bookId: string) => void;
+  onViewDetails?: (book: UserBook) => void;
   onManageCover?: (bookId: string) => void;
 }
 
@@ -26,8 +26,26 @@ export const BookCard: React.FC<BookCardProps> = ({
 }) => {
   const [showActions, setShowActions] = useState(false);
 
+  const handleOpenDetails = () => {
+    if (onViewDetails) {
+      onViewDetails(book);
+    }
+  };
+
   return (
-    <div className="book-card" role="article">
+    <div
+      className={`book-card ${onViewDetails ? 'book-card--clickable' : ''}`}
+      role={onViewDetails ? 'button' : 'article'}
+      tabIndex={onViewDetails ? 0 : -1}
+      onClick={onViewDetails ? handleOpenDetails : undefined}
+      onKeyDown={onViewDetails ? (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          handleOpenDetails();
+        }
+      } : undefined}
+      aria-label={onViewDetails ? `View details for ${book.book.title}` : undefined}
+    >
       <div className="book-card-cover">
         {book.book.coverUrl ? (
           <img src={book.book.coverUrl} alt={book.book.title} className="book-card-cover-img" />
@@ -55,7 +73,10 @@ export const BookCard: React.FC<BookCardProps> = ({
       <div className="book-card-actions">
         <button
           className="book-card-menu-btn"
-          onClick={() => setShowActions((prev) => !prev)}
+          onClick={(event) => {
+            event.stopPropagation();
+            setShowActions((prev) => !prev);
+          }}
           aria-label={`Actions for ${book.book.title}`}
           aria-expanded={showActions}
           aria-haspopup="menu"
@@ -68,8 +89,9 @@ export const BookCard: React.FC<BookCardProps> = ({
             {onViewDetails && (
               <button
                 className="book-card-menu-item"
-                onClick={() => {
-                  onViewDetails(book.id);
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onViewDetails(book);
                   setShowActions(false);
                 }}
                 role="menuitem"
@@ -80,7 +102,8 @@ export const BookCard: React.FC<BookCardProps> = ({
             {onChangeState && (
               <button
                 className="book-card-menu-item"
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   onChangeState(book.id);
                   setShowActions(false);
                 }}
@@ -92,7 +115,8 @@ export const BookCard: React.FC<BookCardProps> = ({
             {onEditRating && book.state === 'READ' && (
               <button
                 className="book-card-menu-item"
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   onEditRating(book.id);
                   setShowActions(false);
                 }}
@@ -104,7 +128,8 @@ export const BookCard: React.FC<BookCardProps> = ({
             {onManageCover && (
               <button
                 className="book-card-menu-item"
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   onManageCover(book.id);
                   setShowActions(false);
                 }}
@@ -116,7 +141,8 @@ export const BookCard: React.FC<BookCardProps> = ({
             {onRemove && (
               <button
                 className="book-card-menu-item book-card-menu-item--danger"
-                onClick={() => {
+                onClick={(event) => {
+                  event.stopPropagation();
                   onRemove(book.id);
                   setShowActions(false);
                 }}

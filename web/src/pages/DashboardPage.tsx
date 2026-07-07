@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { StatsSection } from '../components/Library/StatsSection';
 import { BookList } from '../components/Library/BookList';
 import { PaginationControls } from '../components/Library/PaginationControls';
@@ -13,11 +14,16 @@ import { useLibraryBooks, useLibraryStats } from '../hooks/useLibrary';
 import { usePagination } from '../hooks/usePagination';
 import { ReadingState } from '../types/shared';
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
+import type { UserBook } from '../types/library';
+import { BookDetailModal } from '../components/Modals/BookDetailModal';
 
 const DashboardPage: React.FC = () => {
+  const queryClient = useQueryClient();
   const pagination = usePagination();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState<ReadingState | null>(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailBook, setDetailBook] = useState<UserBook | null>(null);
 
   const { data: stats, isLoading: statsLoading } = useLibraryStats();
   const { data: libraryData, isLoading: booksLoading } = useLibraryBooks({
@@ -67,6 +73,10 @@ const DashboardPage: React.FC = () => {
           <BookList
             books={libraryData?.content}
             isEmpty={!libraryData?.content || libraryData.content.length === 0}
+            onViewDetails={(book) => {
+              setDetailBook(book);
+              setShowDetailModal(true);
+            }}
           />
 
           {libraryData && libraryData.totalPages > 0 && (
@@ -79,6 +89,20 @@ const DashboardPage: React.FC = () => {
             />
           )}
         </>
+      )}
+
+      {detailBook && (
+        <BookDetailModal
+          userBook={detailBook}
+          isOpen={showDetailModal}
+          onClose={() => {
+            setShowDetailModal(false);
+            setDetailBook(null);
+          }}
+          onCoverUpdated={() => {
+            void queryClient.invalidateQueries({ queryKey: ['library'] });
+          }}
+        />
       )}
     </div>
   );

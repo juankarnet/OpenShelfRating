@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import type { UserBook } from '../types/library';
 import { useQueryClient } from '@tanstack/react-query';
 import { StatsSection } from '../components/Library/StatsSection';
 import { BookList } from '../components/Library/BookList';
@@ -34,6 +35,7 @@ const LibraryPage: React.FC = () => {
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [detailBook, setDetailBook] = useState<UserBook | null>(null);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [isCoverSubmitting, setIsCoverSubmitting] = useState(false);
   const [coverError, setCoverError] = useState<string | null>(null);
@@ -186,8 +188,8 @@ const LibraryPage: React.FC = () => {
               setSelectedBookId(id);
               setShowRemoveModal(true);
             }}
-            onViewDetails={(id) => {
-              setSelectedBookId(id);
+            onViewDetails={(book) => {
+              setDetailBook(book);
               setShowDetailModal(true);
             }}
             onManageCover={(id) => {
@@ -241,18 +243,22 @@ const LibraryPage: React.FC = () => {
             onCancel={() => setShowRemoveModal(false)}
             isLoading={removeMutation.isPending}
           />
+        </>
+      )}
 
-          <BookDetailModal
-            userBook={selectedBook}
-            isOpen={showDetailModal}
-            onClose={() => setShowDetailModal(false)}
-            onCoverUpdated={() => {
-              void queryClient.invalidateQueries({ queryKey: ['library'] });
-            }}
-          />
+      {detailBook && (
+        <BookDetailModal
+          userBook={detailBook}
+          isOpen={showDetailModal}
+          onClose={() => { setShowDetailModal(false); setDetailBook(null); }}
+          onCoverUpdated={() => {
+            void queryClient.invalidateQueries({ queryKey: ['library'] });
+          }}
+        />
+      )}
 
-          {showCoverModal && (
-            <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cover-title">
+      {selectedBook && showCoverModal && (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cover-title">
               <div className="modal-box">
                 <h2 id="cover-title" className="modal-title">Manage Cover</h2>
                 <p className="modal-body">{selectedBook.book.title}</p>
@@ -301,8 +307,6 @@ const LibraryPage: React.FC = () => {
               </div>
             </div>
           )}
-        </>
-      )}
     </div>
   );
 };

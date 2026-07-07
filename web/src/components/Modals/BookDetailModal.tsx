@@ -9,6 +9,7 @@ import type { UserBook } from '../../types/library';
 import { mediaApi } from '../../api';
 import { resolveMediaUrl } from '../../utils/mediaUrl';
 import { useAuth } from '../../hooks/useAuth';
+import { BaseModal } from './BaseModal';
 
 interface BookDetailModalProps {
   userBook: UserBook;
@@ -32,8 +33,6 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [localCoverUrl, setLocalCoverUrl] = useState<string | null>(null);
-
-  if (!isOpen) return null;
 
   const { book, state, rating, opinion, addedAt } = userBook;
 
@@ -84,8 +83,14 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
   };
 
   return (
-    <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="book-detail-title">
-      <div className="modal-box book-detail-modal">
+    <BaseModal
+      isOpen={isOpen}
+      onClose={onClose}
+      labelledBy="book-detail-title"
+      className="book-detail-modal"
+      closeOnOutsideClick={true}
+      closeOnEscape={true}
+    >
         <button
           className="modal-close-btn"
           onClick={onClose}
@@ -194,7 +199,6 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
             </table>
           </div>
         </div>
-      </div>
-    </div>
+    </BaseModal>
   );
 };
