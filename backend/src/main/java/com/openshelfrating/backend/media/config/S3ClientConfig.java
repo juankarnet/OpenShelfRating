@@ -34,6 +34,7 @@ public class S3ClientConfig {
                 .credentialsProvider(StaticCredentialsProvider.create(AwsBasicCredentials.create(s3.getAccessKey(), s3.getSecretKey())))
                 .region(Region.of(s3.getRegion()))
                 .endpointOverride(URI.create(s3.getEndpoint()))
+                .serviceConfiguration(S3Configuration.builder().pathStyleAccessEnabled(true).build())
                 .build();
     }
 }

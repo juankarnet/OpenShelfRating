@@ -54,7 +54,7 @@ export const clearToken = (): void => {
  * Save minimal authenticated user profile to localStorage.
  * @param user User profile to persist across refreshes
  */
-export const saveUser = (user: { userId: string; email: string; displayName: string; role: string }): void => {
+export const saveUser = (user: { userId: string; email: string; displayName: string; role: string; avatarUrl?: string | null }): void => {
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 };
 
@@ -62,7 +62,7 @@ export const saveUser = (user: { userId: string; email: string; displayName: str
  * Load persisted user profile from localStorage.
  * @returns Stored user profile or null when unavailable/invalid
  */
-export const loadUser = (): { userId: string; email: string; displayName: string; role: string } | null => {
+export const loadUser = (): { userId: string; email: string; displayName: string; role: string; avatarUrl?: string | null } | null => {
   const raw = localStorage.getItem(USER_KEY);
   if (!raw) {
     return null;
@@ -81,6 +81,7 @@ export const loadUser = (): { userId: string; email: string; displayName: string
         email: parsed.email,
         displayName: parsed.displayName,
         role: parsed.role,
+        avatarUrl: typeof parsed.avatarUrl === 'string' ? parsed.avatarUrl : null,
       };
     }
   } catch {

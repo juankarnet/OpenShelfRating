@@ -3,21 +3,36 @@
  * REQ-011, AC-012 from SPEC-0006.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ConfirmActionModal } from '../components/Modals/ConfirmActionModal';
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
 
 const ProfilePage: React.FC = () => {
+  const ALLOWED_AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
+
   const navigate = useNavigate();
-  const { user, logout, updateProfile, isLoading, error, clearError } = useAuth();
+  const { user, logout, updateProfile, uploadAvatar, deleteAvatar, refreshAvatarUrl, isLoading, error, clearError } = useAuth();
 
   const [isEditingName, setIsEditingName] = useState(false);
   const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [formError, setFormError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isDeletingAvatar, setIsDeletingAvatar] = useState(false);
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    void refreshAvatarUrl();
+  }, [refreshAvatarUrl]);
+
+  useEffect(() => {
+    setAvatarLoadError(false);
+  }, [user?.avatarUrl]);
 
   if (!user) {
     return (
@@ -65,6 +80,50 @@ const ProfilePage: React.FC = () => {
     navigate('/login', { replace: true });
   };
 
+  const handleAvatarFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) {
+      return;
+    }
+
+    if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.type)) {
+      setFormError('Avatar must be JPG, PNG, or WebP.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      setFormError('Avatar image must be 5MB or smaller.');
+      event.target.value = '';
+      return;
+    }
+
+    setFormError(null);
+    clearError();
+    setIsUploadingAvatar(true);
+    try {
+      await uploadAvatar(file);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to upload avatar.');
+    } finally {
+      event.target.value = '';
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    setFormError(null);
+    clearError();
+    setIsDeletingAvatar(true);
+    try {
+      await deleteAvatar();
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : 'Failed to delete avatar.');
+    } finally {
+      setIsDeletingAvatar(false);
+    }
+  };
+
   const displayedError = formError || error;
 
   return (
@@ -75,8 +134,45 @@ const ProfilePage: React.FC = () => {
         {/* Profile Header Card */}
         <div className="profile-card">
           <div className="profile-avatar">
-            <div className="avatar-placeholder">
-              {user.displayName.charAt(0).toUpperCase()}
+            {user.avatarUrl && !avatarLoadError ? (
+              <img
+                className="profile-avatar-image"
+                src={user.avatarUrl}
+                alt={`${user.displayName} avatar`}
+                onError={() => setAvatarLoadError(true)}
+              />
+            ) : (
+              <div className="avatar-placeholder">
+                {user.displayName.charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div className="avatar-actions">
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="avatar-file-input"
+                onChange={handleAvatarFileChange}
+                disabled={isLoading || isSaving || isUploadingAvatar || isDeletingAvatar}
+              />
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={() => avatarInputRef.current?.click()}
+                disabled={isLoading || isSaving || isUploadingAvatar || isDeletingAvatar}
+              >
+                {isUploadingAvatar ? 'Uploading...' : 'Change avatar'}
+              </button>
+              {user.avatarUrl && (
+                <button
+                  type="button"
+                  className="btn btn-link"
+                  onClick={handleDeleteAvatar}
+                  disabled={isLoading || isSaving || isUploadingAvatar || isDeletingAvatar}
+                >
+                  {isDeletingAvatar ? 'Removing...' : 'Remove avatar'}
+                </button>
+              )}
             </div>
           </div>
 
@@ -141,7 +237,7 @@ const ProfilePage: React.FC = () => {
         )}
 
         {/* Loading State */}
-        {(isLoading || isSaving) && <LoadingSpinner message="Processing..." />}
+        {(isLoading || isSaving || isUploadingAvatar || isDeletingAvatar) && <LoadingSpinner message="Processing..." />}
 
         {/* Logout Button */}
         <div className="profile-actions">

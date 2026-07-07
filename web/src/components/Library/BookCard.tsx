@@ -13,6 +13,7 @@ interface BookCardProps {
   onEditRating?: (bookId: string) => void;
   onRemove?: (bookId: string) => void;
   onViewDetails?: (bookId: string) => void;
+  onManageCover?: (bookId: string) => void;
 }
 
 export const BookCard: React.FC<BookCardProps> = ({
@@ -21,6 +22,7 @@ export const BookCard: React.FC<BookCardProps> = ({
   onEditRating,
   onRemove,
   onViewDetails,
+  onManageCover,
 }) => {
   const [showActions, setShowActions] = useState(false);
 
@@ -97,6 +99,18 @@ export const BookCard: React.FC<BookCardProps> = ({
                 role="menuitem"
               >
                 {book.rating ? 'Edit' : 'Add'} Rating
+              </button>
+            )}
+            {onManageCover && (
+              <button
+                className="book-card-menu-item"
+                onClick={() => {
+                  onManageCover(book.id);
+                  setShowActions(false);
+                }}
+                role="menuitem"
+              >
+                Manage Cover
               </button>
             )}
             {onRemove && (

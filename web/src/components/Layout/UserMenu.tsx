@@ -19,9 +19,16 @@ interface MenuItem {
 export const UserMenu: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [triggerAvatarError, setTriggerAvatarError] = useState(false);
+  const [menuAvatarError, setMenuAvatarError] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+
+  useEffect(() => {
+    setTriggerAvatarError(false);
+    setMenuAvatarError(false);
+  }, [user?.avatarUrl]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -80,7 +87,16 @@ export const UserMenu: React.FC = () => {
           aria-label={`User menu for ${displayName}`}
         >
           <span className="user-avatar" aria-hidden="true">
-            {initials}
+            {user?.avatarUrl && !triggerAvatarError ? (
+              <img
+                src={user.avatarUrl}
+                alt=""
+                className="user-avatar-image"
+                onError={() => setTriggerAvatarError(true)}
+              />
+            ) : (
+              initials
+            )}
           </span>
           <span className="user-name">{displayName}</span>
           <span className="menu-chevron" aria-hidden="true">
@@ -91,7 +107,18 @@ export const UserMenu: React.FC = () => {
         {isOpen && (
           <div className="user-menu-dropdown" role="menu" aria-label="User menu">
             <div className="menu-user-info">
-              <div className="menu-user-avatar">{initials}</div>
+              <div className="menu-user-avatar">
+                {user?.avatarUrl && !menuAvatarError ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt=""
+                    className="menu-user-avatar-image"
+                    onError={() => setMenuAvatarError(true)}
+                  />
+                ) : (
+                  initials
+                )}
+              </div>
               <div className="menu-user-details">
                 <span className="menu-user-name">{displayName}</span>
                 {user?.email && <span className="menu-user-email">{user.email}</span>}

@@ -66,6 +66,107 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/Book'
+  /books/{bookId}/cover:
+    post:
+      summary: Upload book cover image
+      operationId: uploadBookCover
+      parameters:
+        - in: path
+          name: bookId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Cover uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaUploadResponse'
+        '400':
+          description: Invalid file type or malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden for non-admin when replacing an existing cover
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Uploaded file exceeds configured max cover size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Get book cover access URL
+      operationId: getBookCover
+      parameters:
+        - in: path
+          name: bookId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Cover access URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAccessResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete book cover (soft-delete media reference)
+      operationId: deleteBookCover
+      parameters:
+        - in: path
+          name: bookId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Cover removed
+        '403':
+          description: Forbidden for non-admin users
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Book not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
   /users/{userId}/library:
     get:
       summary: List user library
@@ -157,6 +258,101 @@ paths:
       responses:
         '200':
           description: Review saved
+  /users/{userId}/avatar:
+    post:
+      summary: Upload user avatar image
+      operationId: uploadUserAvatar
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file:
+                  type: string
+                  format: binary
+      responses:
+        '201':
+          description: Avatar uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaUploadResponse'
+        '400':
+          description: Invalid file type or malformed request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '403':
+          description: Forbidden for non-owner/non-admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '413':
+          description: Uploaded file exceeds configured max avatar size
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: Get user avatar access URL
+      operationId: getUserAvatar
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Avatar access URL
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MediaAccessResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      summary: Delete user avatar (soft-delete media reference)
+      operationId: deleteUserAvatar
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Avatar removed
+        '403':
+          description: Forbidden for non-owner/non-admin
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
 components:
   schemas:
     RegisterRequest:
@@ -264,3 +460,42 @@ components:
         opinion:
           type: string
           maxLength: 1000
+    MediaUploadResponse:
+      type: object
+      required: [uploadId, presignedUrl, expiresAt, mimeType, fileSize]
+      properties:
+        uploadId:
+          type: string
+          format: uuid
+        presignedUrl:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+        mimeType:
+          type: string
+          example: image/jpeg
+        fileSize:
+          type: integer
+          format: int64
+          minimum: 0
+    MediaAccessResponse:
+      type: object
+      required: [url, placeholder]
+      properties:
+        url:
+          type: string
+          format: uri
+        expiresAt:
+          type: string
+          format: date-time
+          nullable: true
+        placeholder:
+          type: boolean
+    ErrorResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string

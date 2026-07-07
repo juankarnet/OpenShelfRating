@@ -327,7 +327,7 @@ export const mediaApi = {
     )
   },
 
-  getAvatar: (userId: string) => request<MediaAccessResponse>(`/users/${userId}/avatar`),
+  getAvatar: (userId: string, token?: string) => request<MediaAccessResponse>(`/users/${userId}/avatar`, undefined, token),
 
   deleteAvatar: (userId: string, token: string) =>
     request<void>(

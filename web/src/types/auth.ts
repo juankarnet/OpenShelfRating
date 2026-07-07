@@ -31,7 +31,7 @@ export interface UserProfile {
   userId: string;
   email: string;
   displayName: string;
-  avatarUrl?: string;
+  avatarUrl?: string | null;
   role: UserRole;
   createdAt: string;
   updatedAt: string;
@@ -72,8 +72,11 @@ export interface AuthContextType {
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, displayName: string, password: string) => Promise<void>;
+  register: (email: string, displayName: string, password: string, avatarFile?: File | null) => Promise<void>;
   logout: () => void;
   updateProfile: (profile: UpdateProfileRequest) => Promise<void>;
+  uploadAvatar: (file: File) => Promise<void>;
+  deleteAvatar: () => Promise<void>;
+  refreshAvatarUrl: () => Promise<void>;
   clearError: () => void;
 }

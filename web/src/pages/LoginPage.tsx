@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect } from 'react';
 import type { FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {
   isAccountLocked,
@@ -16,6 +16,9 @@ import {
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
 
 const LoginPage: React.FC = () => {
+  const ALLOWED_AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
+
   const navigate = useNavigate();
   const { login, register, isAuthenticated, isLoading, error, clearError } = useAuth();
 
@@ -23,6 +26,8 @@ const LoginPage: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreviewUrl, setAvatarPreviewUrl] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [lockRemaining, setLockRemaining] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,6 +60,40 @@ const LoginPage: React.FC = () => {
     }
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (avatarPreviewUrl) {
+        URL.revokeObjectURL(avatarPreviewUrl);
+      }
+    };
+  }, [avatarPreviewUrl]);
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    if (!file) {
+      return;
+    }
+
+    if (!ALLOWED_AVATAR_MIME_TYPES.includes(file.type)) {
+      setFormError('Avatar must be JPG, PNG, or WebP.');
+      e.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_AVATAR_SIZE_BYTES) {
+      setFormError('Avatar image must be 5MB or smaller.');
+      e.target.value = '';
+      return;
+    }
+
+    setFormError(null);
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+    }
+    setAvatarFile(file);
+    setAvatarPreviewUrl(URL.createObjectURL(file));
+  };
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setFormError(null);
@@ -81,7 +120,7 @@ const LoginPage: React.FC = () => {
           setIsSubmitting(false);
           return;
         }
-        await register(email, displayName, password);
+        await register(email, displayName, password, avatarFile);
         navigate('/dashboard', { replace: true });
       }
     } catch (err) {
@@ -115,6 +154,11 @@ const LoginPage: React.FC = () => {
     setEmail('');
     setPassword('');
     setDisplayName('');
+    setAvatarFile(null);
+    if (avatarPreviewUrl) {
+      URL.revokeObjectURL(avatarPreviewUrl);
+    }
+    setAvatarPreviewUrl(null);
   };
 
   const displayedError = formError || error;
@@ -163,22 +207,46 @@ const LoginPage: React.FC = () => {
           </div>
 
           {mode === 'register' && (
-            <div className="form-group">
-              <label htmlFor="displayName" className="form-label">
-                Display Name
-              </label>
-              <input
-                id="displayName"
-                type="text"
-                className="form-input"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-                placeholder="Your name"
-                required
-                autoComplete="name"
-                disabled={isSubmitting || isLoading}
-              />
-            </div>
+            <>
+              <div className="form-group">
+                <label htmlFor="displayName" className="form-label">
+                  Display Name
+                </label>
+                <input
+                  id="displayName"
+                  type="text"
+                  className="form-input"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder="Your name"
+                  required
+                  autoComplete="name"
+                  disabled={isSubmitting || isLoading}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="avatar" className="form-label">
+                  Avatar (optional)
+                </label>
+                <input
+                  id="avatar"
+                  type="file"
+                  className="form-input"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleAvatarChange}
+                  disabled={isSubmitting || isLoading}
+                />
+                {avatarFile && <small>{avatarFile.name}</small>}
+                {avatarPreviewUrl && (
+                  <img
+                    src={avatarPreviewUrl}
+                    alt="Avatar preview"
+                    style={{ width: '64px', height: '64px', borderRadius: '50%', objectFit: 'cover', marginTop: '8px' }}
+                  />
+                )}
+              </div>
+            </>
           )}
 
           <div className="form-group">
@@ -222,9 +290,6 @@ const LoginPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="auth-help-link">
-          <Link to="/help">How does OpenShelfRating work?</Link>
-        </div>
       </div>
     </div>
   );

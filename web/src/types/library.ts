@@ -9,12 +9,16 @@ import { ReadingState } from './shared';
  */
 export interface Book {
   id: string;
+  bookId?: string;
   title: string;
   author: string;
   isbn13?: string;
   publisher?: string;
   language?: string;
   coverUrl?: string;
+  createdBy?: string;
+  pages?: number;
+  publicationDate?: string;
 }
 
 /**

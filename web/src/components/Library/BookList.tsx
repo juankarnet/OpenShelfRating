@@ -15,6 +15,7 @@ interface BookListProps {
   onEditRating?: (bookId: string) => void;
   onRemove?: (bookId: string) => void;
   onViewDetails?: (bookId: string) => void;
+  onManageCover?: (bookId: string) => void;
   className?: string;
 }
 
@@ -26,6 +27,7 @@ export const BookList: React.FC<BookListProps> = ({
   onEditRating,
   onRemove,
   onViewDetails,
+  onManageCover,
   className = '',
 }) => {
   if (isLoading) {
@@ -46,6 +48,7 @@ export const BookList: React.FC<BookListProps> = ({
             onEditRating={onEditRating}
             onRemove={onRemove}
             onViewDetails={onViewDetails}
+            onManageCover={onManageCover}
           />
         </div>
       ))}

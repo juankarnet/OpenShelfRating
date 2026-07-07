@@ -69,6 +69,13 @@ Optional modes for richer dataset and cleanup:
 | `APP_MEDIA_S3_ACCESS_KEY` | `minioadmin` | S3 access key |
 | `APP_MEDIA_S3_SECRET_KEY` | `minioadmin` | S3 secret key |
 
+## Environment Variables (Web)
+| Variable | Default | Description |
+|---|---|---|
+| `VITE_API_BASE_URL` | `http://localhost:8080` | Backend API base URL consumed by the web client |
+| `VITE_MEDIA_BUCKET_NAME` | `openshelfrating-media` | Default bucket name used to resolve media object paths in local dev |
+| `VITE_MEDIA_PUBLIC_BASE_URL` | `http://localhost:9000/openshelfrating-media` | Public base URL for media objects; set this for S3/CDN or any non-local environment |
+
 2. Start backend (requires JDK 21):
 ```powershell
 cd backend

@@ -4,20 +4,77 @@
  */
 
 import { API_BASE_URL } from '../api';
-import type { PaginatedResponse } from '../types/shared';
-import type {
-  UserBook,
-  LibraryStats,
-  SearchLibraryRequest,
-  TransitionStateRequest,
-  UpdateReviewRequest,
-} from '../types/library';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
-const mapUserBook = (item: UserBook & { book?: { primaryAuthor?: string; author?: string } }): UserBook => ({
+type BookState = 'PENDING' | 'READING' | 'READ';
+
+interface ServiceBook {
+  id: string;
+  bookId?: string;
+  title: string;
+  author: string;
+  primaryAuthor?: string;
+  coverUrl?: string;
+  createdBy?: string;
+  isbn13?: string;
+  publisher?: string;
+  language?: string;
+  pages?: number;
+  publicationDate?: string;
+}
+
+interface ServiceUserBook {
+  id: string;
+  userId: string;
+  book: ServiceBook;
+  state: BookState;
+  rating?: number;
+  opinion?: string;
+  addedAt: string;
+  reviewUpdatedAt?: string;
+}
+
+interface ServiceLibraryStats {
+  totalBooks: number;
+  stateDistribution: Partial<Record<BookState, number>>;
+  averageRating: number;
+}
+
+interface ServiceSearchLibraryRequest {
+  page: number;
+  size: number;
+  state?: BookState | null;
+  search?: string;
+}
+
+interface ServicePaginatedResponse<T> {
+  content: T[];
+  totalPages: number;
+  totalElements: number;
+  size: number;
+  number: number;
+}
+
+interface ServiceTransitionStateRequest {
+  bookId: string;
+  nextState: BookState;
+  readDate?: string;
+}
+
+interface ServiceUpdateReviewRequest {
+  bookId: string;
+  rating: number;
+  opinion?: string;
+}
+
+const mapUserBook = (item: ServiceUserBook & { book?: { primaryAuthor?: string; author?: string } }): ServiceUserBook => ({
   ...item,
   book: {
     ...item.book,
     author: item.book?.author ?? item.book?.primaryAuthor ?? '',
+    bookId: (item.book as ServiceBook & { bookId?: string })?.bookId ?? item.book?.id,
+    createdBy: (item.book as ServiceBook & { createdBy?: string })?.createdBy,
+    coverUrl: resolveMediaUrl(item.book?.coverUrl),
   },
 });
 
@@ -27,9 +84,9 @@ const mapUserBook = (item: UserBook & { book?: { primaryAuthor?: string; author?
  */
 export const fetchLibraryBooks = async (
   userId: string,
-  request: SearchLibraryRequest,
+  request: ServiceSearchLibraryRequest,
   token: string
-): Promise<PaginatedResponse<UserBook>> => {
+): Promise<ServicePaginatedResponse<ServiceUserBook>> => {
   const params = new URLSearchParams({
     page: request.page.toString(),
     size: request.size.toString(),
@@ -58,7 +115,7 @@ export const fetchLibraryBooks = async (
  * Fetch library statistics.
  * REQ-004, REQ-005 from SPEC-0006.
  */
-export const fetchLibraryStats = async (userId: string, token: string): Promise<LibraryStats> => {
+export const fetchLibraryStats = async (userId: string, token: string): Promise<ServiceLibraryStats> => {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/library/stats`, {
     method: 'GET',
     headers: { Authorization: `Bearer ${token}` },
@@ -74,7 +131,7 @@ export const fetchLibraryStats = async (userId: string, token: string): Promise<
 /**
  * Add book to user's library.
  */
-export const addBookToLibrary = async (userId: string, bookId: string, token: string): Promise<UserBook> => {
+export const addBookToLibrary = async (userId: string, bookId: string, token: string): Promise<ServiceUserBook> => {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/library`, {
     method: 'POST',
     headers: {
@@ -113,9 +170,9 @@ export const removeBookFromLibrary = async (userId: string, bookId: string, toke
 export const transitionReadingState = async (
   userId: string,
   bookId: string,
-  request: Omit<TransitionStateRequest, 'bookId'>,
+  request: Omit<ServiceTransitionStateRequest, 'bookId'>,
   token: string
-): Promise<UserBook> => {
+): Promise<ServiceUserBook> => {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/library/${bookId}/state`, {
     method: 'PUT',
     headers: {
@@ -140,9 +197,9 @@ export const transitionReadingState = async (
 export const updateReview = async (
   userId: string,
   bookId: string,
-  request: Omit<UpdateReviewRequest, 'bookId'>,
+  request: Omit<ServiceUpdateReviewRequest, 'bookId'>,
   token: string
-): Promise<UserBook> => {
+): Promise<ServiceUserBook> => {
   const response = await fetch(`${API_BASE_URL}/users/${userId}/library/${bookId}/review`, {
     method: 'PUT',
     headers: {

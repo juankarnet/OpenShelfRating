@@ -3,14 +3,15 @@
  * REQ-012, AC-013 from SPEC-0006.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
-import { catalogApi, libraryApi } from '../api';
+import { catalogApi, libraryApi, mediaApi } from '../api';
 import type { BookSearchResponse } from '../api';
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
 import { ConfirmActionModal } from '../components/Modals/ConfirmActionModal';
+import { resolveMediaUrl } from '../utils/mediaUrl';
 
 const AddBookPage: React.FC = () => {
   const navigate = useNavigate();
@@ -25,6 +26,11 @@ const AddBookPage: React.FC = () => {
   const [language, setLanguage] = useState('en');
   const [description, setDescription] = useState('');
   const [coverUrl, setCoverUrl] = useState('');
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
+
+  const ALLOWED_COVER_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+  const MAX_COVER_SIZE_BYTES = 10 * 1024 * 1024;
 
   // Search & selection state
   const [searchResults, setSearchResults] = useState<BookSearchResponse[]>([]);
@@ -82,8 +88,49 @@ const AddBookPage: React.FC = () => {
     setPublisher('');
     setDescription('');
     setCoverUrl('');
+    setCoverFile(null);
+    setCoverPreviewUrl(null);
     setIsbn('');
   };
+
+  const handleCoverFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0] ?? null;
+    if (!file) {
+      setCoverFile(null);
+      if (coverPreviewUrl) {
+        URL.revokeObjectURL(coverPreviewUrl);
+      }
+      setCoverPreviewUrl(null);
+      return;
+    }
+
+    if (!ALLOWED_COVER_MIME_TYPES.includes(file.type)) {
+      setSubmitError('La portada debe ser JPG, PNG o WebP.');
+      event.target.value = '';
+      return;
+    }
+
+    if (file.size > MAX_COVER_SIZE_BYTES) {
+      setSubmitError('La portada debe ser de 10MB o menos.');
+      event.target.value = '';
+      return;
+    }
+
+    setSubmitError(null);
+    setCoverFile(file);
+    if (coverPreviewUrl) {
+      URL.revokeObjectURL(coverPreviewUrl);
+    }
+    setCoverPreviewUrl(URL.createObjectURL(file));
+  };
+
+  useEffect(() => {
+    return () => {
+      if (coverPreviewUrl) {
+        URL.revokeObjectURL(coverPreviewUrl);
+      }
+    };
+  }, [coverPreviewUrl]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -113,6 +160,10 @@ const AddBookPage: React.FC = () => {
       if (selectedBook) {
         // Use existing book
         bookId = selectedBook.bookId;
+
+        if (coverFile) {
+          await mediaApi.uploadCover(bookId, coverFile, token);
+        }
       } else {
         // Create new book
         const newBook = await catalogApi.create(
@@ -129,6 +180,10 @@ const AddBookPage: React.FC = () => {
           token
         );
         bookId = newBook.bookId;
+
+        if (coverFile) {
+          await mediaApi.uploadCover(bookId, coverFile, token);
+        }
       }
 
       // Add to user's library
@@ -206,7 +261,7 @@ const AddBookPage: React.FC = () => {
                     >
                       {book.coverUrl && (
                         <img
-                          src={book.coverUrl}
+                          src={resolveMediaUrl(book.coverUrl)}
                           alt={book.title}
                           className="result-cover"
                         />
@@ -234,7 +289,7 @@ const AddBookPage: React.FC = () => {
                 <div className="selected-badge">✓ Selected</div>
                 <div className="selected-content">
                   {selectedBook.coverUrl && (
-                    <img src={selectedBook.coverUrl} alt={selectedBook.title} />
+                    <img src={resolveMediaUrl(selectedBook.coverUrl)} alt={selectedBook.title} />
                   )}
                   <div className="selected-info">
                     <h4>{selectedBook.title}</h4>
@@ -371,6 +426,27 @@ const AddBookPage: React.FC = () => {
                   placeholder="https://example.com/book-cover.jpg (optional)"
                   disabled={isSubmitting}
                 />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="coverFile" className="form-label">
+                  Cover Image Upload
+                </label>
+                <input
+                  id="coverFile"
+                  type="file"
+                  className="form-input"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleCoverFileChange}
+                  disabled={isSubmitting}
+                />
+                {coverPreviewUrl && (
+                  <img
+                    src={coverPreviewUrl}
+                    alt="Cover preview"
+                    style={{ width: '120px', height: '180px', objectFit: 'cover', marginTop: '8px', borderRadius: '8px' }}
+                  />
+                )}
               </div>
 
               {submitError && <div className="alert alert-danger">{submitError}</div>}
