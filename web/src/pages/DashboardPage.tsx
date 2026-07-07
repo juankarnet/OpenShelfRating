@@ -5,6 +5,7 @@
  */
 
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { StatsSection } from '../components/Library/StatsSection';
 import { BookList } from '../components/Library/BookList';
@@ -16,8 +17,10 @@ import { ReadingState } from '../types/shared';
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
 import type { UserBook } from '../types/library';
 import { BookDetailModal } from '../components/Modals/BookDetailModal';
+import { ActionIcon } from '../components/Common/ActionIcon';
 
 const DashboardPage: React.FC = () => {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const pagination = usePagination();
   const [searchQuery, setSearchQuery] = useState('');
@@ -62,8 +65,17 @@ const DashboardPage: React.FC = () => {
         onFilterByState={handleFilterByState}
       />
 
-      <div className="library-filters">
-        <SearchFilter onSearch={handleSearch} />
+      <div className="library-filters dashboard-search-row">
+        <SearchFilter onSearch={handleSearch} className="dashboard-search-filter" />
+        <button
+          type="button"
+          className="btn btn-primary icon-only-btn"
+          onClick={() => navigate('/add-book')}
+          data-tooltip="Add book"
+          aria-label="Add book"
+        >
+          <ActionIcon name="add" />
+        </button>
       </div>
 
       {isLoading && <LoadingSpinner size="medium" />}

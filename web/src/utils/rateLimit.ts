@@ -6,7 +6,7 @@
 
 const FAILED_LOGINS_KEY = 'osr_failed_logins';
 const LOCK_UNTIL_KEY = 'osr_login_locked_until';
-const MAX_ATTEMPTS = 10;
+const MAX_ATTEMPTS = 30;
 const ATTEMPT_WINDOW_MS = 30 * 60 * 1000; // 30 minutes
 const LOCK_DURATION_MS = 2 * 60 * 1000; // 2 minutes
 

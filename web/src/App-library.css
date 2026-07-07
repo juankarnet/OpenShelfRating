@@ -283,6 +283,17 @@
   color: var(--color-text);
 }
 
+.dashboard-search-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-search-filter {
+  flex: 1;
+  margin-bottom: 0;
+}
+
 /* ===============================================
    Stats Section
    =============================================== */
