@@ -1,10 +1,10 @@
 # Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 11 - Frontend Expansion (SPEC-0004/SPEC-0005)
-*   **Current Gate:** Frontend web+mobile implementado para SPEC-0001..SPEC-0005; validación técnica ejecutada (web build + mobile tsc).
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-06-26 17:12:00 +02:00
-*   **Commit Target:** `SPEC-0005: implement frontend media flows (web+mobile)`
+*   **Current Milestone:** State 12 - Frontend Navigation & Dashboard (SPEC-0006)
+*   **Current Gate:** SPEC-0006 implementation in progress; frontend phases delivered, backend integration/testing pending.
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-06 16:45:00 +02:00
+*   **Commit Target:** `SPEC-0006: close backend compilation + E2E integration validation`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -14,7 +14,7 @@
 *   **Technical Plans:** `.agent-workspace/docs/spec/SPEC-000X/SPEC-000X_TechnicalPlan.md`
 
 ## 3. Current Stack
-*   **Backend:** Java 21 + Spring Boot + Spring Data JPA + Flyway + PostgreSQL
+*   **Backend:** Java 11 (current repo config) + Spring Boot + Spring Data JPA + Flyway + PostgreSQL
 *   **Architecture:** Hexagonal/Clean Architecture
 *   **Testing:** JUnit 5 + Testcontainers (integration pending for SPEC-0002)
 
@@ -24,6 +24,7 @@
 *   **SPEC-0003:** ✅ Implemented (baseline)
 *   **SPEC-0004:** ✅ Implemented (baseline)
 *   **SPEC-0005:** ✅ Implemented (baseline)
+*   **SPEC-0006:** 🟡 In Progress (frontend phases implemented; backend compile/E2E validation pending)
 
 ## 5. Completed Milestones
 *   **SPEC-0001:** Identity & Access implemented and compiled.
@@ -91,3 +92,19 @@
 *   **SPEC-0003 (frontend):** ✅ committed (`a08feae`)
 *   **SPEC-0004 (frontend):** ✅ committed (`6a9001a`)
 *   **SPEC-0005 (frontend):** ✅ implemented + validated, commit pending
+*   **SPEC-0006 (frontend):** ✅ implemented across phases 1-9 (`8fd20bb`, `0ad1965`, `25d9a4a`, `bcdc2ed`, `eeed5b0`)
+
+## 10. SPEC-0006 Delivery Snapshot (Current)
+*   **Frontend:**
+  - ✅ Routing, guards, and session persistence.
+  - ✅ Dashboard/library views with pagination, filters, and modals.
+  - ✅ Profile page (edit displayName + logout confirmation).
+  - ✅ Add Book flow (catalog search + manual create + add to library).
+  - ✅ Settings placeholder and Help documentation page.
+*   **Backend:**
+  - ✅ DTO alignment and library API extensions for state/review workflows.
+  - ⚠️ Build verification pending in compatible Java environment.
+*   **Pending to close SPEC-0006:**
+  - Run backend compile/tests in target Java runtime.
+  - Execute E2E frontend-backend integration checks.
+  - Collect evidence for AC closure and final status update.

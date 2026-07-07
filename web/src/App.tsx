@@ -94,7 +94,6 @@ const AppRoutes: React.FC = () => {
           </GuestRoute>
         }
       />
-      <Route path="/help" element={<HelpPage />} />
 
       {/* Authenticated routes under MainLayout */}
       <Route
@@ -109,6 +108,7 @@ const AppRoutes: React.FC = () => {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/add-book" element={<AddBookPage />} />
         <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/help" element={<HelpPage />} />
       </Route>
 
       {/* Root redirect */}

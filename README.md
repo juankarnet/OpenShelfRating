@@ -7,7 +7,7 @@ Monorepo base for the MVP defined in the SDD specifications.
 - `web/`: React + Vite + TypeScript frontend
 - `mobile/`: Android app with React Native (Expo)
 - `contracts/openapi/`: OpenAPI 3.1 contracts
-- `infra/`: docker-compose and local configuration
+- `infra/`: podman-compose/local compose and environment configuration
 - `.agent-workspace/`: SDD governance, context and specs
 
 ## Quick Start

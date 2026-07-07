@@ -140,7 +140,7 @@ public class UserLibraryService {
         long readCount = userBookRepository.countByUserIdAndReadingStateAndDeletedAtIsNull(pathUserId, ReadingState.READ);
 
         // Calculate average rating of books that have been rated
-        double averageRating = userBookRepository.findByUserIdAndDeletedAtIsNull(pathUserId).stream()
+        double averageRating = userBookRepository.findAllByUserIdAndDeletedAtIsNull(pathUserId).stream()
                 .filter(userBook -> userBook.getRating() != null)
                 .mapToInt(userBook -> userBook.getRating())
                 .average()
@@ -240,6 +240,8 @@ public class UserLibraryService {
                 return false;
         }
     }
+
+    private void authorizeAccess(UUID pathUserId, UUID principalUserId) {
         UUID effectivePrincipal = principalUserId != null ? principalUserId : pathUserId;
 
         UserAccount requester = userAccountRepository.findById(effectivePrincipal)

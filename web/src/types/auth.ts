@@ -5,10 +5,12 @@
 /**
  * User roles in the system.
  */
-export enum UserRole {
-  USER = 'USER',
-  ADMIN = 'ADMIN',
-}
+export const UserRole = {
+  USER: 'USER',
+  ADMIN: 'ADMIN',
+} as const;
+
+export type UserRole = typeof UserRole[keyof typeof UserRole];
 
 /**
  * Authentication response after login.

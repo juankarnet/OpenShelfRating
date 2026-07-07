@@ -1,8 +1,10 @@
 package com.openshelfrating.backend.catalog.domain;
 
 public enum BookGenre {
+    CLASSIC,
     FICTION,
     MYSTERY,
+    THRILLER,
     ROMANCE,
     SCIENCE_FICTION,
     FANTASY,

@@ -21,6 +21,11 @@ public class VerificationEmailService {
     }
 
     public void sendVerificationEmail(String toEmail, String verificationUrl) {
+        if (!mailProperties.isEnabled()) {
+            LOGGER.info("Email sending disabled (app.mail.enabled=false). Skipping verification email to {}", toEmail);
+            LOGGER.info("Verification URL (dev only): {}", verificationUrl);
+            return;
+        }
         try {
             SimpleMailMessage message = new SimpleMailMessage();
             message.setFrom(mailProperties.getFrom());

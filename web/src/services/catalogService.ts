@@ -4,7 +4,7 @@
  */
 
 import { API_BASE_URL } from '../api';
-import { Book } from '../types/library';
+import type { Book } from '../types/library';
 
 const API_URL = `${API_BASE_URL}/catalog`;
 

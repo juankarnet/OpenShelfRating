@@ -134,6 +134,52 @@ button { cursor: pointer; font-family: inherit; }
 .app-nav { display: flex; align-items: center; gap: 12px; }
 
 /* -----------------------------------------------
+   Breadcrumbs
+   ----------------------------------------------- */
+.app-breadcrumbs {
+  max-width: var(--content-max-width);
+  width: 100%;
+  margin: 0 auto;
+  padding: 10px var(--content-padding) 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.breadcrumbs-back {
+  flex-shrink: 0;
+}
+
+.breadcrumbs-trail {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 32px;
+  font-size: 0.875rem;
+  color: var(--color-text-muted);
+}
+
+.breadcrumbs-link {
+  color: var(--color-secondary);
+  text-decoration: none;
+}
+
+.breadcrumbs-link:hover {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+
+.breadcrumbs-separator {
+  color: var(--color-text-light);
+}
+
+.breadcrumbs-current {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+/* -----------------------------------------------
    User Menu
    ----------------------------------------------- */
 .user-menu { position: relative; }
@@ -246,6 +292,7 @@ button { cursor: pointer; font-family: inherit; }
 .btn-full { width: 100%; }
 .btn-link { background: none; border: none; color: var(--color-primary); font-size: inherit; padding: 0; text-decoration: underline; }
 .btn-link:hover { color: var(--color-primary-hover); }
+.btn-sm { padding: 6px 10px; font-size: 0.8rem; }
 
 /* -----------------------------------------------
    Forms

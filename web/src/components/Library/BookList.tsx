@@ -4,7 +4,7 @@
  */
 
 import React from 'react';
-import { UserBook } from '../../types/library';
+import type { UserBook } from '../../types/library';
 import { BookCard } from './BookCard';
 
 interface BookListProps {

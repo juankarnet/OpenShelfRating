@@ -2,7 +2,8 @@
  * Error boundary component to catch React rendering errors.
  */
 
-import React, { Component, ErrorInfo } from 'react';
+import React, { Component } from 'react';
+import type { ErrorInfo } from 'react';
 
 interface Props {
   children: React.ReactNode;

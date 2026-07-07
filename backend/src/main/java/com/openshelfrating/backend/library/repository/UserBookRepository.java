@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -26,6 +27,8 @@ public interface UserBookRepository extends JpaRepository<UserBook, UUID> {
     Page<UserBook> findByUserIdAndReadingState(UUID userId, ReadingState readingState, Pageable pageable);
 
     long countByUserIdAndDeletedAtIsNull(UUID userId);
+
+    List<UserBook> findAllByUserIdAndDeletedAtIsNull(UUID userId);
 
     long countByUserIdAndReadingStateAndDeletedAtIsNull(UUID userId, ReadingState readingState);
 

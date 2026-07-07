@@ -104,6 +104,8 @@ interface CreateBookPayload {
   isbn10?: string
   publisher?: string
   language?: string
+  description?: string
+  coverUrl?: string
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080'
@@ -151,10 +153,26 @@ const request = async <T>(
   const body = await parseBody(response)
 
   if (!response.ok) {
-    const message =
-      typeof body === 'object' && body !== null && 'message' in body
-        ? String((body as { message: unknown }).message)
-        : `HTTP ${response.status}`
+    let message: string
+    
+    if (typeof body === 'object' && body !== null && 'message' in body) {
+      message = String((body as { message: unknown }).message)
+    } else if (typeof body === 'object' && body !== null && 'error' in body) {
+      message = String((body as { error: unknown }).error)
+    } else {
+      // Friendly default messages by HTTP status
+      const statusMessages: Record<number, string> = {
+        400: 'Los datos enviados no son válidos. Revisa los campos requeridos.',
+        401: 'No estás autenticado. Por favor inicia sesión.',
+        403: 'No tienes permiso para realizar esta acción.',
+        404: 'El recurso solicitado no existe.',
+        409: 'Este recurso ya existe o entra en conflicto con otro.',
+        413: 'El archivo es demasiado grande.',
+        500: 'Error del servidor. Intenta más tarde.',
+        503: 'El servicio no está disponible. Intenta más tarde.',
+      }
+      message = statusMessages[response.status] || `Error (HTTP ${response.status})`
+    }
     throw new ApiError(response.status, message)
   }
 
@@ -199,9 +217,9 @@ export const catalogApi = {
 
   getById: (bookId: string) => request<BookResponse>(`/books/${bookId}`),
 
-  create: (payload: CreateBookPayload, token: string) =>
+  create: (payload: CreateBookPayload, userId: string, token: string) =>
     request<BookResponse>(
-      '/books',
+      `/books?actorUserId=${encodeURIComponent(userId)}`,
       {
         method: 'POST',
         body: JSON.stringify(payload),

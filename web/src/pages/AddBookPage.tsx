@@ -3,16 +3,18 @@
  * REQ-012, AC-013 from SPEC-0006.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { catalogApi, libraryApi } from '../api';
-import { BookSearchResponse, BookResponse } from '../api';
+import type { BookSearchResponse } from '../api';
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
 import { ConfirmActionModal } from '../components/Modals/ConfirmActionModal';
 
 const AddBookPage: React.FC = () => {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, token } = useAuth();
 
   // Form state
@@ -21,6 +23,8 @@ const AddBookPage: React.FC = () => {
   const [author, setAuthor] = useState('');
   const [publisher, setPublisher] = useState('');
   const [language, setLanguage] = useState('en');
+  const [description, setDescription] = useState('');
+  const [coverUrl, setCoverUrl] = useState('');
 
   // Search & selection state
   const [searchResults, setSearchResults] = useState<BookSearchResponse[]>([]);
@@ -76,6 +80,8 @@ const AddBookPage: React.FC = () => {
     setTitle('');
     setAuthor('');
     setPublisher('');
+    setDescription('');
+    setCoverUrl('');
     setIsbn('');
   };
 
@@ -116,7 +122,10 @@ const AddBookPage: React.FC = () => {
             isbn13: isbn.trim() || undefined,
             publisher: publisher.trim() || undefined,
             language,
+            description: description.trim() || undefined,
+            coverUrl: coverUrl.trim() || undefined,
           },
+          user.userId,
           token
         );
         bookId = newBook.bookId;
@@ -125,10 +134,18 @@ const AddBookPage: React.FC = () => {
       // Add to user's library
       await libraryApi.addBook(user.userId, bookId, token);
 
+      // Force refetch on dashboard/library views so the new book appears immediately.
+      await queryClient.invalidateQueries({ queryKey: ['library'] });
+
       // Success - redirect to dashboard or library
       navigate('/dashboard', { replace: true, state: { bookAdded: true } });
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Failed to add book.');
+      // Extract detailed error message
+      let errorMsg = 'No se pudo agregar el libro.';
+      if (err instanceof Error) {
+        errorMsg = err.message;
+      }
+      setSubmitError(errorMsg);
       setShowConfirmAdd(false);
     } finally {
       setIsSubmitting(false);
@@ -310,6 +327,36 @@ const AddBookPage: React.FC = () => {
                     <option value="zh">Chinese</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="description" className="form-label">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  className="form-input"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Brief description of the book (optional)"
+                  disabled={isSubmitting}
+                  rows={3}
+                />
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="coverUrl" className="form-label">
+                  Cover URL
+                </label>
+                <input
+                  id="coverUrl"
+                  type="url"
+                  className="form-input"
+                  value={coverUrl}
+                  onChange={(e) => setCoverUrl(e.target.value)}
+                  placeholder="https://example.com/book-cover.jpg (optional)"
+                  disabled={isSubmitting}
+                />
               </div>
 
               {submitError && <div className="alert alert-danger">{submitError}</div>}

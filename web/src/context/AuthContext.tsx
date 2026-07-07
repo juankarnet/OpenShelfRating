@@ -4,9 +4,34 @@
  */
 
 import React, { createContext, useState, useCallback, useEffect } from 'react';
-import { AuthContextType, UserProfile, LoginRequest, RegisterRequest, UserRole } from '../types/auth';
-import { saveToken, loadToken, clearToken } from '../utils/sessionStorage';
+import type { AuthContextType, UserProfile } from '../types/auth';
+import { UserRole } from '../types/auth';
+import { saveToken, loadToken, clearToken, saveUser, loadUser } from '../utils/sessionStorage';
 import { recordSuccessfulLogin } from '../utils/rateLimit';
+
+/**
+ * Safely parses the response body as JSON.
+ * Returns null if the body is empty or not valid JSON.
+ */
+const parseResponseBody = async (response: Response): Promise<Record<string, unknown> | null> => {
+  const text = await response.text();
+  if (!text.trim()) return null;
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * Extracts a user-friendly message from an error response.
+ */
+const extractErrorMessage = (body: Record<string, unknown> | null, fallback: string): string => {
+  if (!body) return fallback;
+  if (typeof body.message === 'string' && body.message) return body.message;
+  if (typeof body.error === 'string' && body.error) return body.error;
+  return fallback;
+};
 
 /**
  * Create authentication context.
@@ -22,6 +47,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const fetchProfile = useCallback(async (userId: string, authToken: string) => {
+    const response = await fetch(`/api/users/${userId}/profile`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${authToken}`,
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error('No se pudo recuperar el perfil del usuario.');
+    }
+
+    return response.json() as Promise<Record<string, unknown>>;
+  }, []);
+
   /**
    * Initialize auth state from localStorage on component mount.
    */
@@ -29,10 +69,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const initAuth = async () => {
       try {
         const storedToken = loadToken();
-        if (storedToken) {
+        const storedUser = loadUser();
+        if (storedToken && storedUser) {
           setToken(storedToken);
-          // In real scenario, validate token with backend
-          // For now, assume valid token
+          setUser({
+            userId: storedUser.userId,
+            email: storedUser.email,
+            displayName: storedUser.displayName,
+            role: storedUser.role as UserRole,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          });
+        } else if (storedToken && !storedUser) {
+          clearToken();
         }
       } catch (err) {
         console.error('Error initializing auth:', err);
@@ -61,28 +110,42 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Login failed');
+        const errorBody = await parseResponseBody(response);
+        const msg = extractErrorMessage(errorBody, 'Credenciales incorrectas. Revisa tu email y contraseña.');
+        throw new Error(msg);
       }
 
       const data = await response.json();
-      const { token: newToken, userId, displayName, role } = data;
+      const { token: newToken, userId, role } = data;
 
       // Store token
       saveToken(newToken);
       setToken(newToken);
 
-      // Create user profile
-      const profile: UserProfile = {
-        userId,
-        email,
-        displayName,
-        role: role as UserRole,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      let profile: UserProfile;
+      try {
+        const remoteProfile = await fetchProfile(String(userId), String(newToken));
+        profile = {
+          userId: String(remoteProfile.userId ?? userId),
+          email: String(remoteProfile.email ?? email),
+          displayName: String(remoteProfile.displayName ?? email.split('@')[0] ?? 'User'),
+          role: (String(remoteProfile.role ?? role ?? UserRole.USER) as UserRole),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      } catch {
+        profile = {
+          userId: String(userId),
+          email,
+          displayName: email.split('@')[0] ?? 'User',
+          role: (String(role ?? UserRole.USER) as UserRole),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
 
       setUser(profile);
+      saveUser({ userId: profile.userId, email: profile.email, displayName: profile.displayName, role: profile.role });
 
       // Clear rate-limit data on successful login
       recordSuccessfulLogin();
@@ -111,8 +174,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Registration failed');
+        const errorBody = await parseResponseBody(response);
+        const msg = extractErrorMessage(errorBody, 'No se pudo crear la cuenta. El email puede estar en uso.');
+        throw new Error(msg);
       }
 
       const data = await response.json();
@@ -122,17 +186,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       saveToken(newToken);
       setToken(newToken);
 
-      // Create user profile
-      const profile: UserProfile = {
-        userId,
-        email,
-        displayName,
-        role: role as UserRole,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
+      let profile: UserProfile;
+      try {
+        const remoteProfile = await fetchProfile(String(userId), String(newToken));
+        profile = {
+          userId: String(remoteProfile.userId ?? userId),
+          email: String(remoteProfile.email ?? email),
+          displayName: String(remoteProfile.displayName ?? displayName),
+          role: (String(remoteProfile.role ?? role ?? UserRole.USER) as UserRole),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      } catch {
+        profile = {
+          userId: String(userId),
+          email,
+          displayName,
+          role: (String(role ?? UserRole.USER) as UserRole),
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
 
       setUser(profile);
+      saveUser({ userId: profile.userId, email: profile.email, displayName: profile.displayName, role: profile.role });
       recordSuccessfulLogin();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Registration failed';
@@ -141,7 +218,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [fetchProfile]);
 
   /**
    * Handle logout.
@@ -152,7 +229,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setToken(null);
     setUser(null);
     setError(null);
-  }, []);
+  }, [fetchProfile]);
 
   /**
    * Update user profile.
@@ -177,12 +254,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Profile update failed');
+        const errorBody = await parseResponseBody(response);
+        const msg = extractErrorMessage(errorBody, 'No se pudo actualizar el perfil.');
+        throw new Error(msg);
       }
 
       const updatedProfile = await response.json();
-      setUser({ ...user, ...updatedProfile });
+      const mergedProfile = { ...user, ...updatedProfile };
+      setUser(mergedProfile);
+      saveUser({
+        userId: mergedProfile.userId,
+        email: mergedProfile.email,
+        displayName: mergedProfile.displayName,
+        role: mergedProfile.role,
+      });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Profile update failed';
       setError(message);

@@ -49,10 +49,15 @@ const DashboardPage: React.FC = () => {
     <div className="page dashboard-page">
       <h1 className="page-title">My Library</h1>
 
-      <StatsSection stats={stats} isLoading={statsLoading} />
+      <StatsSection
+        stats={stats}
+        isLoading={statsLoading}
+        activeState={selectedState}
+        onFilterByState={handleFilterByState}
+      />
 
       <div className="library-filters">
-        <SearchFilter onSearch={handleSearch} onFilterByState={handleFilterByState} />
+        <SearchFilter onSearch={handleSearch} />
       </div>
 
       {isLoading && <LoadingSpinner size="medium" />}
@@ -68,8 +73,8 @@ const DashboardPage: React.FC = () => {
             <PaginationControls
               currentPage={pagination.state.page}
               totalPages={libraryData.totalPages}
-              onPreviousPage={pagination.goToPrevious}
-              onNextPage={pagination.goToNext}
+              onPreviousPage={pagination.goToPreviousPage}
+              onNextPage={pagination.goToNextPage}
               onGoToPage={pagination.goToPage}
             />
           )}
@@ -78,7 +83,5 @@ const DashboardPage: React.FC = () => {
     </div>
   );
 };
-
-export default DashboardPage;
 
 export default DashboardPage;

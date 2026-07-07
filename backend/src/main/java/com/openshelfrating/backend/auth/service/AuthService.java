@@ -6,6 +6,7 @@ import com.openshelfrating.backend.auth.api.RegisterRequest;
 import com.openshelfrating.backend.auth.api.UpdateProfileRequest;
 import com.openshelfrating.backend.auth.api.UserProfileResponse;
 import com.openshelfrating.backend.auth.config.AuthProperties;
+import com.openshelfrating.backend.auth.config.MailProperties;
 import com.openshelfrating.backend.auth.domain.EmailVerificationToken;
 import com.openshelfrating.backend.auth.domain.UserAccount;
 import com.openshelfrating.backend.auth.domain.UserRole;
@@ -30,6 +31,7 @@ public class AuthService {
     private final VerificationEmailService verificationEmailService;
     private final JwtService jwtService;
     private final AuthProperties authProperties;
+    private final MailProperties mailProperties;
 
     public AuthService(
             UserAccountRepository userAccountRepository,
@@ -38,7 +40,8 @@ public class AuthService {
             PasswordPolicyValidator passwordPolicyValidator,
             VerificationEmailService verificationEmailService,
             JwtService jwtService,
-            AuthProperties authProperties
+            AuthProperties authProperties,
+            MailProperties mailProperties
     ) {
         this.userAccountRepository = userAccountRepository;
         this.tokenRepository = tokenRepository;
@@ -47,6 +50,7 @@ public class AuthService {
         this.verificationEmailService = verificationEmailService;
         this.jwtService = jwtService;
         this.authProperties = authProperties;
+        this.mailProperties = mailProperties;
     }
 
     public void register(RegisterRequest request) {
@@ -63,17 +67,22 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setDisplayName(request.displayName().trim());
         user.setRole(UserRole.USER);
-        user.setEmailVerified(false);
+
+        // When email is disabled (local dev), skip verification and mark as verified immediately
+        boolean emailEnabled = mailProperties.isEnabled();
+        user.setEmailVerified(!emailEnabled);
         user = userAccountRepository.save(user);
 
-        EmailVerificationToken verificationToken = new EmailVerificationToken();
-        verificationToken.setUser(user);
-        verificationToken.setToken(UUID.randomUUID().toString().replace("-", ""));
-        verificationToken.setExpiresAt(OffsetDateTime.now().plusHours(authProperties.getVerificationExpirationHours()));
-        tokenRepository.save(verificationToken);
+        if (emailEnabled) {
+            EmailVerificationToken verificationToken = new EmailVerificationToken();
+            verificationToken.setUser(user);
+            verificationToken.setToken(UUID.randomUUID().toString().replace("-", ""));
+            verificationToken.setExpiresAt(OffsetDateTime.now().plusHours(authProperties.getVerificationExpirationHours()));
+            tokenRepository.save(verificationToken);
 
-        String verificationUrl = authProperties.getBaseUrl() + "/auth/verify-email?token=" + verificationToken.getToken();
-        verificationEmailService.sendVerificationEmail(user.getEmail(), verificationUrl);
+            String verificationUrl = authProperties.getBaseUrl() + "/auth/verify-email?token=" + verificationToken.getToken();
+            verificationEmailService.sendVerificationEmail(user.getEmail(), verificationUrl);
+        }
     }
 
     public AuthResponse login(LoginRequest request) {

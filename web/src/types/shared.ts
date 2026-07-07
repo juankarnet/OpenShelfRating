@@ -5,19 +5,23 @@
 /**
  * Reading state enumeration for books in user's library.
  */
-export enum ReadingState {
-  PENDING = 'PENDING',
-  READING = 'READING',
-  READ = 'READ',
-}
+export const ReadingState = {
+  PENDING: 'PENDING',
+  READING: 'READING',
+  READ: 'READ',
+} as const;
+
+export type ReadingState = typeof ReadingState[keyof typeof ReadingState];
 
 /**
  * Media resource type enumeration.
  */
-export enum MediaResourceType {
-  USER_AVATAR = 'USER_AVATAR',
-  BOOK_COVER = 'BOOK_COVER',
-}
+export const MediaResourceType = {
+  USER_AVATAR: 'USER_AVATAR',
+  BOOK_COVER: 'BOOK_COVER',
+} as const;
+
+export type MediaResourceType = typeof MediaResourceType[keyof typeof MediaResourceType];
 
 /**
  * Generic API error response.

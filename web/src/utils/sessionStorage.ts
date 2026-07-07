@@ -5,6 +5,7 @@
 
 const TOKEN_KEY = 'osr_token';
 const TOKEN_EXPIRY_KEY = 'osr_token_expiry';
+const USER_KEY = 'osr_user';
 const SESSION_EXPIRY_DAYS = 30;
 
 /**
@@ -46,6 +47,48 @@ export const loadToken = (): string | null => {
 export const clearToken = (): void => {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(TOKEN_EXPIRY_KEY);
+  localStorage.removeItem(USER_KEY);
+};
+
+/**
+ * Save minimal authenticated user profile to localStorage.
+ * @param user User profile to persist across refreshes
+ */
+export const saveUser = (user: { userId: string; email: string; displayName: string; role: string }): void => {
+  localStorage.setItem(USER_KEY, JSON.stringify(user));
+};
+
+/**
+ * Load persisted user profile from localStorage.
+ * @returns Stored user profile or null when unavailable/invalid
+ */
+export const loadUser = (): { userId: string; email: string; displayName: string; role: string } | null => {
+  const raw = localStorage.getItem(USER_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    if (
+      typeof parsed.userId === 'string' &&
+      typeof parsed.email === 'string' &&
+      typeof parsed.displayName === 'string' &&
+      typeof parsed.role === 'string'
+    ) {
+      return {
+        userId: parsed.userId,
+        email: parsed.email,
+        displayName: parsed.displayName,
+        role: parsed.role,
+      };
+    }
+  } catch {
+    // Ignore malformed stored data and force fresh login.
+  }
+
+  localStorage.removeItem(USER_KEY);
+  return null;
 };
 
 /**

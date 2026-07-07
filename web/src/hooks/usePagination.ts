@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback } from 'react';
-import { PaginationState } from '../types/pagination';
+import type { PaginationState } from '../types/pagination';
 
 /**
  * Hook to manage pagination state.

@@ -205,6 +205,7 @@ export default function App() {
           publisher: createPublisher || undefined,
           language: 'en',
         },
+        auth.userId,
         auth.token,
       )
       setSelectedBook(response)

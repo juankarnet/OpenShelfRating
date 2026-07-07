@@ -39,11 +39,6 @@ export const ChangeStateModal: React.FC<ChangeStateModalProps> = ({
     onConfirm(nextState, readDate);
   };
 
-  const handleReset = () => {
-    setNextState(null);
-    setReadDate('');
-  };
-
   if (!isOpen) return null;
 
   return (

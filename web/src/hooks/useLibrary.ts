@@ -14,16 +14,11 @@ import {
   transitionReadingState,
   updateReview,
 } from '../services/libraryService';
-import {
-  PaginatedResponse,
+import type {
   ReadingState,
 } from '../types/shared';
-import {
-  UserBook,
-  LibraryStats,
+import type {
   SearchLibraryRequest,
-  TransitionStateRequest,
-  UpdateReviewRequest,
 } from '../types/library';
 
 // Query keys for cache management
@@ -38,15 +33,15 @@ const libraryKeys = {
  * REQ-006, REQ-007, REQ-008 from SPEC-0006.
  */
 export const useLibraryBooks = (filters: SearchLibraryRequest) => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
 
   return useQuery({
     queryKey: libraryKeys.books(filters),
     queryFn: () => {
-      if (!token) throw new Error('No token');
-      return fetchLibraryBooks(filters, token);
+      if (!token || !user?.userId) throw new Error('No authenticated user');
+      return fetchLibraryBooks(user.userId, filters, token);
     },
-    enabled: !!token,
+    enabled: !!token && !!user?.userId,
     staleTime: 1000 * 60 * 2, // 2 minutes
   });
 };
@@ -56,15 +51,15 @@ export const useLibraryBooks = (filters: SearchLibraryRequest) => {
  * REQ-004, REQ-005 from SPEC-0006.
  */
 export const useLibraryStats = () => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
 
   return useQuery({
     queryKey: libraryKeys.stats(),
     queryFn: () => {
-      if (!token) throw new Error('No token');
-      return fetchLibraryStats(token);
+      if (!token || !user?.userId) throw new Error('No authenticated user');
+      return fetchLibraryStats(user.userId, token);
     },
-    enabled: !!token,
+    enabled: !!token && !!user?.userId,
     staleTime: 1000 * 60 * 5, // 5 minutes
   });
 };
@@ -73,13 +68,13 @@ export const useLibraryStats = () => {
  * Hook to add book to library.
  */
 export const useAddBook = () => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (bookId: string) => {
-      if (!token) throw new Error('No token');
-      return addBookToLibrary(bookId, token);
+      if (!token || !user?.userId) throw new Error('No authenticated user');
+      return addBookToLibrary(user.userId, bookId, token);
     },
     onSuccess: () => {
       // Invalidate both books list and stats
@@ -93,13 +88,13 @@ export const useAddBook = () => {
  * Hook to remove book from library.
  */
 export const useRemoveBook = () => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: (bookId: string) => {
-      if (!token) throw new Error('No token');
-      return removeBookFromLibrary(bookId, token);
+      if (!token || !user?.userId) throw new Error('No authenticated user');
+      return removeBookFromLibrary(user.userId, bookId, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: libraryKeys.books() });
@@ -113,7 +108,7 @@ export const useRemoveBook = () => {
  * REQ-004 from SPEC-0006.
  */
 export const useTransitionReadingState = () => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -122,8 +117,8 @@ export const useTransitionReadingState = () => {
       nextState,
       readDate,
     }: { bookId: string; nextState: ReadingState; readDate?: string }) => {
-      if (!token) throw new Error('No token');
-      return transitionReadingState(bookId, { nextState, readDate }, token);
+      if (!token || !user?.userId) throw new Error('No authenticated user');
+      return transitionReadingState(user.userId, bookId, { nextState, readDate }, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: libraryKeys.books() });
@@ -137,13 +132,13 @@ export const useTransitionReadingState = () => {
  * REQ-004 from SPEC-0006.
  */
 export const useUpdateReview = () => {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ bookId, rating, opinion }: { bookId: string; rating: number; opinion?: string }) => {
-      if (!token) throw new Error('No token');
-      return updateReview(bookId, { rating, opinion }, token);
+      if (!token || !user?.userId) throw new Error('No authenticated user');
+      return updateReview(user.userId, bookId, { rating, opinion }, token);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: libraryKeys.books() });

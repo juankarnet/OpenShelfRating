@@ -4,9 +4,8 @@
  */
 
 import React, { useState } from 'react';
-import { UserBook } from '../../types/library';
+import type { UserBook } from '../../types/library';
 import { formatRating, formatReadingState, formatTitle, formatAuthor } from '../../utils/formatters';
-import { ReadingState } from '../../types/shared';
 
 interface BookCardProps {
   book: UserBook;

@@ -3,7 +3,8 @@
  * REQ-001, AC-001, AC-002 from SPEC-0006.
  */
 
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect } from 'react';
+import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import {

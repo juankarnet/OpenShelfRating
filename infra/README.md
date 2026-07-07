@@ -7,12 +7,12 @@ Local stack services:
 
 ## Start
 ```powershell
-docker compose -f infra/docker-compose.yml up -d
+podman compose -f infra/docker-compose.yml up -d
 ```
 
 ## Stop
 ```powershell
-docker compose -f infra/docker-compose.yml down
+podman compose -f infra/docker-compose.yml down
 ```
 
 ## Notes

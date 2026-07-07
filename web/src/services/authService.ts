@@ -4,7 +4,7 @@
  */
 
 import { API_BASE_URL } from '../api';
-import { AuthResponse, UserProfile, LoginRequest, RegisterRequest } from '../types/auth';
+import type { AuthResponse, UserProfile, LoginRequest, RegisterRequest } from '../types/auth';
 
 const API_URL = `${API_BASE_URL}/auth`;
 

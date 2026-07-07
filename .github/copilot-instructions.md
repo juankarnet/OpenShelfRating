@@ -58,3 +58,12 @@
 ## Specification State Update Before Commit Rule
 *   Before creating any `SPEC-XXXX` commit, update the corresponding specification status fields and `PROJECT_STATE.md` to reflect the real current state.
 *   A specification-scoped commit is not complete if traceability/status updates are missing in the same commit.
+
+## Mandatory SPEC Sync Checklist (Operational)
+*   For every `SPEC-XXXX` implementation commit, update all applicable files in the same change set:
+	*   `.agent-workspace/docs/spec/SPEC-XXXX/SPEC-XXXX.md` (metadata status/version/date + progress/traceability notes).
+	*   `.agent-workspace/docs/spec/SPEC-XXXX/SPEC-XXXX_TechnicalPlan.md` (task/progress state, completed vs pending work).
+	*   `.agent-workspace/docs/PROJECT_STATE.md` (milestone gate, spec status table, latest delivery snapshot).
+*   Do not use empty commits as a substitute for document synchronization.
+*   If implementation is partial, status must be explicit (`In Progress` / `Pending Validation`) and must include concrete pending items.
+*   If implementation is complete, include validation evidence summary (compile/test/e2e) before setting final `Implemented` status.

@@ -25,10 +25,8 @@ if (-not $sqlFile) {
 $engine = $null
 if (Get-Command podman -ErrorAction SilentlyContinue) {
     $engine = "podman"
-} elseif (Get-Command docker -ErrorAction SilentlyContinue) {
-    $engine = "docker"
 } else {
-    throw "Neither podman nor docker is available in PATH."
+    throw "Podman is not available in PATH."
 }
 
 Write-Host "Applying dev seed using $engine on container '$ContainerName'..."

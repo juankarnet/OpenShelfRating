@@ -274,10 +274,6 @@
   color: var(--color-text);
 }
 
-.search-filter select {
-  min-width: 150px;
-}
-
 /* ===============================================
    Stats Section
    =============================================== */
@@ -303,8 +299,25 @@
   transition: box-shadow 0.15s;
 }
 
+.stat-card--button {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.stat-card--button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
 .stat-card:hover {
   box-shadow: var(--shadow-sm);
+}
+
+.stat-card--active {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
+  background: #eff6ff;
 }
 
 .stat-icon {
@@ -357,7 +370,4 @@
     flex-direction: column;
   }
 
-  .search-filter select {
-    width: 100%;
-  }
 }
