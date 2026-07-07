@@ -9,14 +9,17 @@ This plan translates SPEC-0006 functional requirements into implementation tasks
 - Backend extensions: pagination/search endpoints, library statistics aggregation
 - Frontend session persistence logic (30-day localStorage tokens, rate-limiting)
 
-## 1.1 Execution Status (2026-07-06)
-**Spec Sync:** In Progress (implementation underway) (Last Sync: 2026-07-07)
+## 1.1 Execution Status (2026-07-07)
+**Spec Sync:** In Progress (code implementation completed; runtime/integration validation pending) (Last Sync: 2026-07-07)
 **Completed:**
 - Frontend phases 1-9 implemented (routing, dashboard/library, profile, add-book, settings/help).
+- Post-phase frontend hardening delivered (book card interactivity + base modal component).
+- Profile/media integration completed in frontend and aligned with SPEC-0006 profile workflows.
 - Backend API extension work for SPEC-0006 started and partially delivered (DTO alignment + state/review endpoints).
 
 **Pending:**
-- Backend compile/test verification in compatible Java runtime.
+- Backend runtime stabilization and compile/test verification in Java 21 environment.
+- Frontend dev runtime stabilization for local validation environment.
 - Integration and E2E validation evidence for acceptance closure.
 
 **Current Plan State:**
@@ -27,9 +30,9 @@ This plan translates SPEC-0006 functional requirements into implementation tasks
 
 ### 2.1 Frontend Structure (web/)
 **Current State:**
-- `web/src/App.tsx` is a monolithic form-based component.
-- No routing library; no server state management.
-- No component hierarchy or modularity.
+- Router-based SPA architecture is implemented and active.
+- Page/component modularization is in place (dashboard, library, profile, add-book, settings, help).
+- Auth/session persistence, query hooks, and modal workflows are implemented at code level.
 
 **Target State:**
 ```
@@ -92,10 +95,10 @@ web/src/
 ```
 
 ### 2.2 Backend API Extensions (SPEC-0006 support)
-**Current Gaps:**
-- `/api/library` endpoints exist but may not include pagination/search parameters.
-- No dedicated `/api/library/stats` endpoint for aggregated statistics.
-- Library list response must include book metadata (cover URL, author, state, rating).
+**Current Gaps (Remaining for closure):**
+- Runtime validation evidence for backend endpoints is not yet captured in the current local environment.
+- End-to-end verification evidence for dashboard/library flows against backend is pending.
+- Any residual API contract mismatches must be verified during closure testing.
 
 **Required Backend Changes:**
 1. **Pagination in Library Listing:**
@@ -134,6 +137,8 @@ npm install date-fns         # Date formatting (if needed for session expiry dis
 # - axios (for HTTP client)
 # - React 18+, Vite, TypeScript
 ```
+
+**Status:** Installed and already present in `web/package.json` (React 19 + React Router + TanStack Query + axios + clsx + date-fns).
 
 **Update web/package.json:**
 ```json
