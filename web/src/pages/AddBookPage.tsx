@@ -152,6 +152,11 @@ const AddBookPage: React.FC = () => {
     }
   };
 
+  const handleAddSelectedBook = () => {
+    setSubmitError(null);
+    setShowConfirmAdd(true);
+  };
+
   return (
     <div className="page add-book-page">
       <h1 className="page-title">Add Book to Library</h1>
@@ -244,6 +249,15 @@ const AddBookPage: React.FC = () => {
                 >
                   Change
                 </button>
+                <button
+                  type="button"
+                  className="btn btn-primary"
+                  onClick={handleAddSelectedBook}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Adding...' : 'Add to Library'}
+                </button>
+                {submitError && <div className="alert alert-danger">{submitError}</div>}
               </div>
             )}
           </div>

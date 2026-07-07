@@ -1,4 +1,4 @@
-# Technical Plan: SPEC-0006 - Frontend Navigation & Dashboard Implementation
+﻿# Technical Plan: SPEC-0006 - Frontend Navigation & Dashboard Implementation
 
 ## 1. Technical Overview
 This plan translates SPEC-0006 functional requirements into implementation tasks across frontend (React/Vite) and backend (Spring Boot API extensions). The core work involves:
@@ -10,6 +10,7 @@ This plan translates SPEC-0006 functional requirements into implementation tasks
 - Frontend session persistence logic (30-day localStorage tokens, rate-limiting)
 
 ## 1.1 Execution Status (2026-07-06)
+**Spec Sync:** In Progress (implementation underway) (Last Sync: 2026-07-07)
 **Completed:**
 - Frontend phases 1-9 implemented (routing, dashboard/library, profile, add-book, settings/help).
 - Backend API extension work for SPEC-0006 started and partially delivered (DTO alignment + state/review endpoints).

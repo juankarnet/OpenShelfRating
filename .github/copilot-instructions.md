@@ -64,6 +64,10 @@
 	*   `.agent-workspace/docs/spec/SPEC-XXXX/SPEC-XXXX.md` (metadata status/version/date + progress/traceability notes).
 	*   `.agent-workspace/docs/spec/SPEC-XXXX/SPEC-XXXX_TechnicalPlan.md` (task/progress state, completed vs pending work).
 	*   `.agent-workspace/docs/PROJECT_STATE.md` (milestone gate, spec status table, latest delivery snapshot).
+*   Before proposing or creating any `SPEC-XXXX` commit, run:
+	*   `powershell -ExecutionPolicy Bypass -File .agent-workspace/scripts/validate-gates.ps1 -Mode spec-sync`
+*   `spec-sync` is an active sync gate: it must update SPEC metadata and TechnicalPlan execution status when needed, and then update `.agent-workspace/docs/PROJECT_STATE.md` in the same pass.
+*   If `spec-sync` fails, do not proceed with commit until findings are fixed in the same change set.
 *   Do not use empty commits as a substitute for document synchronization.
 *   If implementation is partial, status must be explicit (`In Progress` / `Pending Validation`) and must include concrete pending items.
 *   If implementation is complete, include validation evidence summary (compile/test/e2e) before setting final `Implemented` status.

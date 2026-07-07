@@ -1,9 +1,9 @@
-# Living Document: Project State Snapshot
+﻿# Living Document: Project State Snapshot
 
 ## 1. Milestone Status
 *   **Current Milestone:** State 12 - Frontend Navigation & Dashboard (SPEC-0006)
 *   **Current Gate:** SPEC-0006 implementation in progress; frontend phases delivered, backend integration/testing pending.
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-06 16:45:00 +02:00
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-07 11:11:43 +02:00
 *   **Commit Target:** `SPEC-0006: close backend compilation + E2E integration validation`
 
 ## 2. Canonical Sources
