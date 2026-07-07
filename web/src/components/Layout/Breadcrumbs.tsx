@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ActionIcon } from '../Common/ActionIcon';
 
 const LABELS: Record<string, string> = {
   dashboard: 'Dashboard',
@@ -33,10 +34,12 @@ export const Breadcrumbs: React.FC = () => {
     <div className="app-breadcrumbs" aria-label="Breadcrumb navigation">
       <button
         type="button"
-        className="btn btn-secondary btn-sm breadcrumbs-back"
+        className="btn btn-secondary btn-sm breadcrumbs-back icon-only-btn"
         onClick={() => (canGoBack ? navigate(-1) : navigate('/dashboard'))}
+        data-tooltip="Atras"
+        aria-label="Atras"
       >
-        Atras
+        <ActionIcon name="back" />
       </button>
 
       <nav className="breadcrumbs-trail" aria-label="Current location">

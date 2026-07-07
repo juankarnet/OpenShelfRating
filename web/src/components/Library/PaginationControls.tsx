@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { ActionIcon } from '../Common/ActionIcon';
 
 interface PaginationControlsProps {
   currentPage: number;
@@ -28,12 +29,13 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
   return (
     <div className={`pagination ${className}`} role="navigation" aria-label="Pagination">
       <button
-        className="btn btn-secondary btn-sm"
+        className="btn btn-secondary btn-sm icon-only-btn"
         onClick={onPreviousPage}
         disabled={!hasPrevious}
         aria-label="Previous page"
+        data-tooltip="Previous page"
       >
-        ← Previous
+        <ActionIcon name="prev" />
       </button>
 
       <div className="pagination-info">
@@ -67,12 +69,13 @@ export const PaginationControls: React.FC<PaginationControlsProps> = ({
       </div>
 
       <button
-        className="btn btn-secondary btn-sm"
+        className="btn btn-secondary btn-sm icon-only-btn"
         onClick={onNextPage}
         disabled={!hasNext}
         aria-label="Next page"
+        data-tooltip="Next page"
       >
-        Next →
+        <ActionIcon name="next" />
       </button>
     </div>
   );

@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { ActionIcon } from '../Common/ActionIcon';
 
 interface RateBookModalProps {
   isOpen: boolean;
@@ -77,11 +78,11 @@ export const RateBookModal: React.FC<RateBookModalProps> = ({
         </div>
 
         <div className="modal-actions">
-          <button className="btn btn-secondary" onClick={onCancel} disabled={isLoading}>
-            Cancel
+          <button className="btn btn-secondary icon-only-btn" onClick={onCancel} disabled={isLoading} data-tooltip="Cancel" aria-label="Cancel">
+            <ActionIcon name="cancel" />
           </button>
-          <button className="btn btn-primary" onClick={handleConfirm} disabled={rating === 0 || isLoading}>
-            {isLoading ? 'Saving...' : 'Save Rating'}
+          <button className="btn btn-primary icon-only-btn" onClick={handleConfirm} disabled={rating === 0 || isLoading} data-tooltip={isLoading ? 'Saving...' : 'Save Rating'} aria-label={isLoading ? 'Saving...' : 'Save Rating'}>
+            <ActionIcon name="rating" />
           </button>
         </div>
       </div>

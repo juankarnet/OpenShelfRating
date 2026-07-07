@@ -20,6 +20,7 @@ import { LoadingSpinner } from '../components/Common/LoadingSpinner';
 import { mediaApi } from '../api';
 import { useAuth } from '../hooks/useAuth';
 import { BookDetailModal } from '../components/Modals/BookDetailModal';
+import { ActionIcon } from '../components/Common/ActionIcon';
 
 const LibraryPage: React.FC = () => {
   const queryClient = useQueryClient();
@@ -279,29 +280,35 @@ const LibraryPage: React.FC = () => {
 
                 <div className="modal-actions">
                   <button
-                    className="btn btn-secondary"
+                    className="btn btn-secondary icon-only-btn"
                     onClick={() => {
                       setShowCoverModal(false);
                       setCoverFile(null);
                       setCoverError(null);
                     }}
                     disabled={isCoverSubmitting}
+                    data-tooltip="Cancel"
+                    aria-label="Cancel"
                   >
-                    Cancel
+                    <ActionIcon name="cancel" />
                   </button>
                   <button
-                    className="btn btn-primary"
+                    className="btn btn-primary icon-only-btn"
                     onClick={handleUploadCover}
                     disabled={isCoverSubmitting || !coverFile}
+                    data-tooltip={isCoverSubmitting ? 'Uploading...' : 'Upload'}
+                    aria-label={isCoverSubmitting ? 'Uploading...' : 'Upload'}
                   >
-                    {isCoverSubmitting ? 'Uploading...' : 'Upload'}
+                    <ActionIcon name="upload" />
                   </button>
                   <button
-                    className="btn btn-danger"
+                    className="btn btn-danger icon-only-btn"
                     onClick={handleDeleteCover}
                     disabled={isCoverSubmitting}
+                    data-tooltip={isCoverSubmitting ? 'Processing...' : 'Delete Cover'}
+                    aria-label={isCoverSubmitting ? 'Processing...' : 'Delete Cover'}
                   >
-                    {isCoverSubmitting ? 'Processing...' : 'Delete Cover'}
+                    <ActionIcon name="delete" />
                   </button>
                 </div>
               </div>

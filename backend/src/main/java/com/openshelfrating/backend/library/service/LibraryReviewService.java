@@ -76,7 +76,8 @@ public class LibraryReviewService {
                 book.getId(),
                 book.getTitle(),
                 book.getPrimaryAuthor(),
-                book.getCoverUrl()
+            book.getCoverUrl(),
+            book.getCreatedBy().getId()
         );
 
         return new UserBookReviewResponse(

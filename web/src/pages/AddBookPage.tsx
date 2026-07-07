@@ -9,9 +9,31 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { catalogApi, libraryApi, mediaApi } from '../api';
 import type { BookSearchResponse } from '../api';
+import { ReadingState } from '../types/shared';
+import { transitionReadingState, updateReview } from '../services/libraryService';
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
 import { ConfirmActionModal } from '../components/Modals/ConfirmActionModal';
 import { resolveMediaUrl } from '../utils/mediaUrl';
+import { ActionIcon } from '../components/Common/ActionIcon';
+
+const BOOK_GENRES = [
+  'CLASSIC',
+  'FICTION',
+  'MYSTERY',
+  'THRILLER',
+  'ROMANCE',
+  'SCIENCE_FICTION',
+  'FANTASY',
+  'BIOGRAPHY',
+  'HISTORY',
+  'SELF_HELP',
+  'EDUCATION',
+  'TECHNICAL',
+  'POETRY',
+  'DRAMA',
+  'CHILDREN',
+  'YOUNG_ADULT',
+] as const;
 
 const AddBookPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,12 +42,15 @@ const AddBookPage: React.FC = () => {
 
   // Form state
   const [isbn, setIsbn] = useState('');
+  const [isbn10, setIsbn10] = useState('');
   const [title, setTitle] = useState('');
   const [author, setAuthor] = useState('');
+  const [otherAuthors, setOtherAuthors] = useState('');
   const [publisher, setPublisher] = useState('');
+  const [publicationDate, setPublicationDate] = useState('');
+  const [pages, setPages] = useState('');
   const [language, setLanguage] = useState('en');
-  const [description, setDescription] = useState('');
-  const [coverUrl, setCoverUrl] = useState('');
+  const [genre, setGenre] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
 
@@ -35,6 +60,13 @@ const AddBookPage: React.FC = () => {
   // Search & selection state
   const [searchResults, setSearchResults] = useState<BookSearchResponse[]>([]);
   const [selectedBook, setSelectedBook] = useState<BookSearchResponse | null>(null);
+  const [selectedInitialState, setSelectedInitialState] = useState<ReadingState>(ReadingState.PENDING);
+  const [selectedInitialRating, setSelectedInitialRating] = useState(0);
+  const [selectedInitialOpinion, setSelectedInitialOpinion] = useState('');
+  const [draftSelectedInitialRating, setDraftSelectedInitialRating] = useState(0);
+  const [draftSelectedInitialOpinion, setDraftSelectedInitialOpinion] = useState('');
+  const [isSelectedReviewEditMode, setIsSelectedReviewEditMode] = useState(false);
+  const [selectedReviewError, setSelectedReviewError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
 
@@ -78,19 +110,57 @@ const AddBookPage: React.FC = () => {
 
   const handleSelectBook = (book: BookSearchResponse) => {
     setSelectedBook(book);
+    setSelectedInitialState(ReadingState.PENDING);
+    setSelectedInitialRating(0);
+    setSelectedInitialOpinion('');
+    setDraftSelectedInitialRating(0);
+    setDraftSelectedInitialOpinion('');
+    setIsSelectedReviewEditMode(false);
+    setSelectedReviewError(null);
     setSearchResults([]);
   };
 
   const handleClearSelection = () => {
     setSelectedBook(null);
+    setSelectedInitialState(ReadingState.PENDING);
+    setSelectedInitialRating(0);
+    setSelectedInitialOpinion('');
+    setDraftSelectedInitialRating(0);
+    setDraftSelectedInitialOpinion('');
+    setIsSelectedReviewEditMode(false);
+    setSelectedReviewError(null);
     setTitle('');
     setAuthor('');
+    setOtherAuthors('');
     setPublisher('');
-    setDescription('');
-    setCoverUrl('');
+    setPublicationDate('');
+    setPages('');
+    setGenre('');
+    setIsbn10('');
     setCoverFile(null);
     setCoverPreviewUrl(null);
     setIsbn('');
+  };
+
+  const shouldAutoEnableSelectedReviewEdit = (state: ReadingState, rating: number, opinion: string) =>
+    state === ReadingState.READ && rating <= 0 && opinion.trim().length === 0;
+
+  const handleSelectedStateChange = (state: ReadingState) => {
+    setSelectedInitialState(state);
+    setSelectedReviewError(null);
+    setIsSelectedReviewEditMode(shouldAutoEnableSelectedReviewEdit(state, selectedInitialRating, selectedInitialOpinion));
+  };
+
+  const handleSaveSelectedReviewDraft = () => {
+    if (draftSelectedInitialRating < 1 || draftSelectedInitialRating > 5) {
+      setSelectedReviewError('Selecciona una valoración entre 1 y 5 estrellas.');
+      return;
+    }
+
+    setSelectedInitialRating(draftSelectedInitialRating);
+    setSelectedInitialOpinion(draftSelectedInitialOpinion);
+    setIsSelectedReviewEditMode(false);
+    setSelectedReviewError(null);
   };
 
   const handleCoverFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,11 +240,17 @@ const AddBookPage: React.FC = () => {
           {
             title: title.trim(),
             primaryAuthor: author.trim(),
+            otherAuthors: otherAuthors
+              .split(',')
+              .map((value) => value.trim())
+              .filter(Boolean),
             isbn13: isbn.trim() || undefined,
+            isbn10: isbn10.trim() || undefined,
             publisher: publisher.trim() || undefined,
+            publicationDate: publicationDate || undefined,
+            pages: pages.trim() ? Number(pages) : undefined,
             language,
-            description: description.trim() || undefined,
-            coverUrl: coverUrl.trim() || undefined,
+            genres: genre ? [genre] : undefined,
           },
           user.userId,
           token
@@ -187,7 +263,34 @@ const AddBookPage: React.FC = () => {
       }
 
       // Add to user's library
-      await libraryApi.addBook(user.userId, bookId, token);
+      const userBook = await libraryApi.addBook(user.userId, bookId, token);
+
+      const ratingToPersist = isSelectedReviewEditMode ? draftSelectedInitialRating : selectedInitialRating;
+      const opinionToPersist = isSelectedReviewEditMode ? draftSelectedInitialOpinion : selectedInitialOpinion;
+
+      if (selectedBook && selectedInitialState !== ReadingState.PENDING) {
+        await transitionReadingState(
+          user.userId,
+          userBook.userBookId,
+          {
+            nextState: selectedInitialState,
+            readDate: selectedInitialState === ReadingState.READ ? new Date().toISOString().slice(0, 10) : undefined,
+          },
+          token,
+        );
+
+        if (selectedInitialState === ReadingState.READ && ratingToPersist > 0) {
+          await updateReview(
+            user.userId,
+            userBook.userBookId,
+            {
+              rating: ratingToPersist,
+              opinion: opinionToPersist.trim() || undefined,
+            },
+            token,
+          );
+        }
+      }
 
       // Force refetch on dashboard/library views so the new book appears immediately.
       await queryClient.invalidateQueries({ queryKey: ['library'] });
@@ -238,11 +341,13 @@ const AddBookPage: React.FC = () => {
                 />
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-secondary icon-only-btn"
                   onClick={handleSearchByIsbn}
                   disabled={!isbn.trim() || isSearching || isSubmitting}
+                  data-tooltip={isSearching ? 'Searching...' : 'Search'}
+                  aria-label={isSearching ? 'Searching...' : 'Search'}
                 >
-                  {isSearching ? 'Searching...' : 'Search'}
+                  <ActionIcon name="search" />
                 </button>
               </div>
             </div>
@@ -272,10 +377,12 @@ const AddBookPage: React.FC = () => {
                       </div>
                       <button
                         type="button"
-                        className="btn btn-primary btn-sm"
+                        className="btn btn-primary btn-sm icon-only-btn"
                         onClick={() => handleSelectBook(book)}
+                        data-tooltip="Select"
+                        aria-label="Select"
                       >
-                        Select
+                        <ActionIcon name="confirm" />
                       </button>
                     </div>
                   ))}
@@ -287,31 +394,143 @@ const AddBookPage: React.FC = () => {
             {selectedBook && (
               <div className="selected-book">
                 <div className="selected-badge">✓ Selected</div>
-                <div className="selected-content">
-                  {selectedBook.coverUrl && (
-                    <img src={resolveMediaUrl(selectedBook.coverUrl)} alt={selectedBook.title} />
-                  )}
-                  <div className="selected-info">
-                    <h4>{selectedBook.title}</h4>
-                    <p>{selectedBook.primaryAuthor}</p>
+                <div className="selected-main">
+                  <div className="selected-content">
+                    {selectedBook.coverUrl && (
+                      <img src={resolveMediaUrl(selectedBook.coverUrl)} alt={selectedBook.title} />
+                    )}
+                    <div className="selected-info">
+                      <h4>{selectedBook.title}</h4>
+                      <p>{selectedBook.primaryAuthor}</p>
+                    </div>
+                  </div>
+
+                  <div className="selected-reading-panel">
+                    <h3 className="selected-reading-title">Reading setup</h3>
+                    <div className="book-reading-actions selected-reading-actions">
+                    {[ReadingState.PENDING, ReadingState.READING, ReadingState.READ].map((state) => (
+                      <button
+                        key={state}
+                        type="button"
+                        className={`btn btn-sm ${selectedInitialState === state ? 'btn-primary' : 'btn-secondary'}`}
+                        onClick={() => handleSelectedStateChange(state)}
+                        disabled={isSubmitting}
+                      >
+                        {state === ReadingState.PENDING ? 'Pending' : state === ReadingState.READING ? 'Reading' : 'Read'}
+                      </button>
+                    ))}
+                    </div>
+
+                    {selectedInitialState === ReadingState.READ && (
+                      <>
+                        {isSelectedReviewEditMode ? (
+                          <div className="book-review-inline selected-review-inline">
+                            <div className="book-review-stars" role="radiogroup" aria-label="Initial rating">
+                              {[1, 2, 3, 4, 5].map((value) => (
+                                <button
+                                  key={value}
+                                  type="button"
+                                  className={`star-btn ${value <= draftSelectedInitialRating ? 'active' : ''}`}
+                                  onClick={() => setDraftSelectedInitialRating(value)}
+                                  aria-label={`${value} stars`}
+                                  disabled={isSubmitting}
+                                >
+                                  ★
+                                </button>
+                              ))}
+                            </div>
+                            <textarea
+                              className="form-input selected-review-input"
+                              value={draftSelectedInitialOpinion}
+                              onChange={(event) => setDraftSelectedInitialOpinion(event.target.value)}
+                              placeholder="Add a short comment (optional)"
+                              rows={2}
+                              disabled={isSubmitting}
+                            />
+                            <div className="selected-review-actions">
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm icon-only-btn"
+                                onClick={() => {
+                                  setDraftSelectedInitialRating(selectedInitialRating);
+                                  setDraftSelectedInitialOpinion(selectedInitialOpinion);
+                                  setIsSelectedReviewEditMode(false);
+                                  setSelectedReviewError(null);
+                                }}
+                                disabled={isSubmitting}
+                                data-tooltip="Cancel"
+                                aria-label="Cancel"
+                              >
+                                <ActionIcon name="cancel" />
+                              </button>
+                              <button
+                                type="button"
+                                className="btn btn-primary btn-sm icon-only-btn"
+                                onClick={handleSaveSelectedReviewDraft}
+                                disabled={isSubmitting}
+                                data-tooltip="Save review"
+                                aria-label="Save review"
+                              >
+                                <ActionIcon name="save" />
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="selected-review-readonly">
+                            <div className="selected-review-readonly-rating">
+                              {selectedInitialRating > 0
+                                ? `${'★'.repeat(selectedInitialRating)}${'☆'.repeat(5 - selectedInitialRating)}`
+                                : 'Not rated'}
+                            </div>
+                            <p className="selected-review-readonly-opinion">{selectedInitialOpinion || 'No comment'}</p>
+                            <div className="selected-review-actions">
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm icon-only-btn"
+                                onClick={() => {
+                                  setDraftSelectedInitialRating(selectedInitialRating);
+                                  setDraftSelectedInitialOpinion(selectedInitialOpinion);
+                                  setIsSelectedReviewEditMode(true);
+                                  setSelectedReviewError(null);
+                                }}
+                                disabled={isSubmitting}
+                                data-tooltip="Edit review"
+                                aria-label="Edit review"
+                              >
+                                <ActionIcon name="edit" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {selectedReviewError && <div className="alert alert-danger">{selectedReviewError}</div>}
+                      </>
+                    )}
                   </div>
                 </div>
-                <button
-                  type="button"
-                  className="btn btn-link"
-                  onClick={handleClearSelection}
-                  disabled={isSubmitting}
-                >
-                  Change
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  onClick={handleAddSelectedBook}
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Adding...' : 'Add to Library'}
-                </button>
+
+                <div className="selected-controls">
+                  <button
+                    type="button"
+                    className="btn btn-link icon-only-btn"
+                    onClick={handleClearSelection}
+                    disabled={isSubmitting}
+                    data-tooltip="Change"
+                    aria-label="Change"
+                  >
+                    <ActionIcon name="clear" />
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary icon-only-btn"
+                    onClick={handleAddSelectedBook}
+                    disabled={isSubmitting}
+                    data-tooltip={isSubmitting ? 'Adding...' : 'Add to Library'}
+                    aria-label={isSubmitting ? 'Adding...' : 'Add to Library'}
+                  >
+                    <ActionIcon name="add" />
+                  </button>
+                </div>
                 {submitError && <div className="alert alert-danger">{submitError}</div>}
               </div>
             )}
@@ -360,6 +579,38 @@ const AddBookPage: React.FC = () => {
 
               <div className="form-row">
                 <div className="form-group">
+                  <label htmlFor="isbn13" className="form-label">
+                    ISBN-13
+                  </label>
+                  <input
+                    id="isbn13"
+                    type="text"
+                    className="form-input"
+                    value={isbn}
+                    onChange={(e) => setIsbn(e.target.value)}
+                    placeholder="978-0-1234-5678-9"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="isbn10" className="form-label">
+                    ISBN-10
+                  </label>
+                  <input
+                    id="isbn10"
+                    type="text"
+                    className="form-input"
+                    value={isbn10}
+                    onChange={(e) => setIsbn10(e.target.value)}
+                    placeholder="0-123456-47-9"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
                   <label htmlFor="publisher" className="form-label">
                     Publisher
                   </label>
@@ -399,33 +650,68 @@ const AddBookPage: React.FC = () => {
               </div>
 
               <div className="form-group">
-                <label htmlFor="description" className="form-label">
-                  Description
+                <label htmlFor="otherAuthors" className="form-label">
+                  Other authors
                 </label>
-                <textarea
-                  id="description"
+                <input
+                  id="otherAuthors"
+                  type="text"
                   className="form-input"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Brief description of the book (optional)"
+                  value={otherAuthors}
+                  onChange={(e) => setOtherAuthors(e.target.value)}
+                  placeholder="Comma separated (optional)"
                   disabled={isSubmitting}
-                  rows={3}
                 />
               </div>
 
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="publicationDate" className="form-label">
+                    Publication date
+                  </label>
+                  <input
+                    id="publicationDate"
+                    type="date"
+                    className="form-input"
+                    value={publicationDate}
+                    onChange={(e) => setPublicationDate(e.target.value)}
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="pages" className="form-label">
+                    Pages
+                  </label>
+                  <input
+                    id="pages"
+                    type="number"
+                    min="1"
+                    className="form-input"
+                    value={pages}
+                    onChange={(e) => setPages(e.target.value)}
+                    placeholder="320"
+                    disabled={isSubmitting}
+                  />
+                </div>
+              </div>
+
               <div className="form-group">
-                <label htmlFor="coverUrl" className="form-label">
-                  Cover URL
+                <label htmlFor="genre" className="form-label">
+                  Book type
                 </label>
-                <input
-                  id="coverUrl"
-                  type="url"
+                <select
+                  id="genre"
                   className="form-input"
-                  value={coverUrl}
-                  onChange={(e) => setCoverUrl(e.target.value)}
-                  placeholder="https://example.com/book-cover.jpg (optional)"
+                  value={genre}
+                  onChange={(e) => setGenre(e.target.value)}
                   disabled={isSubmitting}
-                />
+                >
+                  <option value="">Select one</option>
+                  {BOOK_GENRES.map((option) => (
+                    <option key={option} value={option}>{option.replaceAll('_', ' ')}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="form-group">
@@ -456,18 +742,22 @@ const AddBookPage: React.FC = () => {
               <div className="form-actions">
                 <button
                   type="button"
-                  className="btn btn-secondary"
+                  className="btn btn-secondary icon-only-btn"
                   onClick={() => navigate('/dashboard')}
                   disabled={isSubmitting}
+                  data-tooltip="Cancel"
+                  aria-label="Cancel"
                 >
-                  Cancel
+                  <ActionIcon name="cancel" />
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary"
+                  className="btn btn-primary icon-only-btn"
                   disabled={!title.trim() || !author.trim() || isSubmitting}
+                  data-tooltip={isSubmitting ? 'Adding...' : 'Add to Library'}
+                  aria-label={isSubmitting ? 'Adding...' : 'Add to Library'}
                 >
-                  {isSubmitting ? 'Adding...' : 'Add to Library'}
+                  <ActionIcon name="add" />
                 </button>
               </div>
             </form>

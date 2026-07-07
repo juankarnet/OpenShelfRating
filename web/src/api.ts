@@ -22,6 +22,7 @@ export interface BookSearchResponse {
   title: string
   primaryAuthor: string
   coverUrl: string | null
+  createdBy: string
 }
 
 export interface BooksPagedResponse {
@@ -35,15 +36,20 @@ export interface BookResponse {
   bookId: string
   title: string
   primaryAuthor: string
+  otherAuthors: string[]
   isbn13: string | null
   isbn10: string | null
   publisher: string | null
   publicationDate: string | null
   pages: number | null
   language: string
+  genres: string[]
   coverUrl: string | null
   createdBy: string
-  isCanonical: boolean
+  canonical: boolean
+  createdAt: string
+  updatedAt: string
+  existing: boolean
 }
 
 export interface BookStatsResponse {
@@ -100,12 +106,29 @@ interface UpdateProfilePayload {
 interface CreateBookPayload {
   title: string
   primaryAuthor: string
+  otherAuthors?: string[]
   isbn13?: string
   isbn10?: string
   publisher?: string
+  publicationDate?: string
+  pages?: number
   language?: string
-  description?: string
+  genres?: string[]
+}
+
+export interface UpdateBookPayload {
+  title?: string
+  primaryAuthor?: string
+  otherAuthors?: string[]
+  isbn13?: string
+  isbn10?: string
+  publisher?: string
+  publicationDate?: string
+  pages?: number
+  language?: string
+  genres?: string[]
   coverUrl?: string
+  metadataCorrections?: string
 }
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080'
@@ -222,6 +245,16 @@ export const catalogApi = {
       `/books?actorUserId=${encodeURIComponent(userId)}`,
       {
         method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      token,
+    ),
+
+  update: (bookId: string, payload: UpdateBookPayload, userId: string, token: string) =>
+    request<BookResponse>(
+      `/books/${bookId}?actorUserId=${encodeURIComponent(userId)}`,
+      {
+        method: 'PUT',
         body: JSON.stringify(payload),
       },
       token,

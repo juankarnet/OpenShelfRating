@@ -3,9 +3,9 @@
 ## 1. Overview
 
 ## 1.1 Execution Status
-**Spec Sync:** Implemented (Last Sync: 2026-07-07)
+**Spec Sync:** In Progress (backend permission hardening delivered; frontend modal alignment pending) (Last Sync: 2026-07-07)
 
-This technical plan outlines the implementation strategy for SPEC-0005 (Media Management). Status: **Implemented baseline**.
+This technical plan outlines the implementation strategy for SPEC-0005 (Media Management). Status: **Backend permission hardening delivered; frontend editable modal alignment pending**.
 
 ## 2. Architecture & Pattern
 *   **Pattern:** Service-oriented; S3-compatible storage abstraction
@@ -216,7 +216,7 @@ aws.secretAccessKey=${AWS_SECRET_ACCESS_KEY}
 - ✅ Size limits enforced (5MB avatar, 10MB cover)
 - ✅ Presigned URLs generated (24h expiry)
 - ✅ Authorization checked (owner/admin only)
-- ✅ Authorization rules enforced: avatar owner/admin; cover create by authenticated user when absent; cover replace/delete by admin
+- ✅ Authorization rules enforced: avatar owner/admin; cover create/replace/delete by creator or admin
 - ✅ NFR-001: Upload <2s, presigned URL <100ms
 - ✅ Integration tests with MinIO
 
@@ -255,6 +255,7 @@ aws.secretAccessKey=${AWS_SECRET_ACCESS_KEY}
     - Upload image file via `POST /books/{bookId}/cover`.
     - Fetch cover access via `GET /books/{bookId}/cover`.
     - Delete cover via `DELETE /books/{bookId}/cover`.
+- Resolve cover management visibility from `book.createdBy` plus current authenticated role.
 - Display returned presigned URL metadata (`expiresAt`, `placeholder`) for manual validation.
 
 ### 10.2 Mobile (Expo React Native)

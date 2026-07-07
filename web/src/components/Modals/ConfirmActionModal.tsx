@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import { ActionIcon } from '../Common/ActionIcon';
 
 interface ConfirmActionModalProps {
   isOpen: boolean;
@@ -37,15 +38,17 @@ export const ConfirmActionModal: React.FC<ConfirmActionModalProps> = ({
         <p>{message}</p>
 
         <div className="modal-actions">
-          <button className="btn btn-secondary" onClick={onCancel} disabled={isLoading}>
-            {cancelText}
+          <button className="btn btn-secondary icon-only-btn" onClick={onCancel} disabled={isLoading} data-tooltip={cancelText} aria-label={cancelText}>
+            <ActionIcon name="cancel" />
           </button>
           <button
-            className={`btn ${isDangerous ? 'btn-danger' : 'btn-primary'}`}
+            className={`btn ${isDangerous ? 'btn-danger' : 'btn-primary'} icon-only-btn`}
             onClick={onConfirm}
             disabled={isLoading}
+            data-tooltip={isLoading ? 'Processing...' : confirmText}
+            aria-label={isLoading ? 'Processing...' : confirmText}
           >
-            {isLoading ? 'Processing...' : confirmText}
+            <ActionIcon name={isDangerous ? 'delete' : 'confirm'} />
           </button>
         </div>
       </div>

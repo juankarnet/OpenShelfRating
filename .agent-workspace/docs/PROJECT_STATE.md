@@ -1,10 +1,10 @@
 ﻿# Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** State 12 - Frontend Navigation & Dashboard (SPEC-0006)
-*   **Current Gate:** SPEC-0006 implementation in progress; frontend delivered (including post-phase UX/media updates), backend runtime/integration validation pending.
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-07 12:42:00 +02:00
-*   **Commit Target:** `SPEC-0006: close backend runtime + frontend-backend E2E validation`
+*   **Current Milestone:** Cross-SPEC Catalog/Media Hardening for Editable Book Modal
+*   **Current Gate:** Backend enablement completed for editable catalog metadata and creator/admin cover management; frontend implementation and integration validation pending.
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-07 15:40:00 +02:00
+*   **Commit Target:** `SPEC-0002/SPEC-0005: enable creator/admin book editing and cover management`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -21,10 +21,10 @@
 
 ## 4. Specification Status (MVP)
 *   **SPEC-0001:** ✅ Implemented
-*   **SPEC-0002:** ✅ Implemented (baseline committed)
+*   **SPEC-0002:** ✅ Implemented (baseline + backend metadata editing hardening delivered)
 *   **SPEC-0003:** ✅ Implemented (baseline)
 *   **SPEC-0004:** ✅ Implemented (baseline)
-*   **SPEC-0005:** ✅ Implemented (frontend media/profile flow committed)
+*   **SPEC-0005:** 🟡 In Progress (backend cover permission hardening delivered; frontend editable modal pending)
 *   **SPEC-0006:** 🟡 In Progress (frontend phases implemented; backend compile/E2E validation pending)
 
 ## 5. Completed Milestones
@@ -58,7 +58,7 @@
       - Media domain/repository (`MediaUpload`, `MediaResourceType`, `MediaUploadRepository`).
       - S3 integration setup (`MediaProperties`, `S3ClientConfig`, `AwsS3StorageAdapter`).
       - Media service and API for avatar/cover upload, retrieval (presigned URL JSON), and delete.
-      - Permission model: avatar owner/admin, cover create for authenticated actor when absent, cover replace/delete admin only.
+      - Permission model hardened: avatar owner/admin, cover create/replace/delete for creator or admin.
       - User profile integration with `avatarUrl` and media validation unit tests.
     - Validation:
       - `./gradlew.bat compileJava` ✅
@@ -72,6 +72,7 @@
       - Repositories (`BookRepository`, `BookDeduplicationKeyRepository`).
       - Services (`BookService`, `IsbnValidator`, `TitleAuthorNormalizer`, `CatalogException`).
       - API (`BookController`, DTOs, `CatalogExceptionHandler`).
+      - Catalog hardening: creator/admin metadata editing, deduplication guards on update, `createdBy` exposed in book search/library payloads.
       - Config + docs (`app.catalog.*` in backend properties and README).
       - Unit tests for validators/normalizer.
     - Validation:
@@ -86,6 +87,7 @@
 ## 8. Active Constraints
 *   Keep traceability between `REQ/NFR/AC/RULE` and implementation.
 *   Keep specification and `PROJECT_STATE.md` status synchronized before each `SPEC-XXXX` commit.
+*   Frontend editable modal must align with backend `PUT /books/{id}` and cover creator/admin permission model.
 
 ## 9. Frontend Delivery Snapshot
 *   **SPEC-0001 (frontend):** ✅ committed (`125e43d`)
@@ -103,7 +105,9 @@
   - ✅ Add Book flow (catalog search + manual create + add to library).
   - ✅ Settings placeholder and Help documentation page.
 *   **Backend:**
-  - ✅ DTO alignment and library API extensions for state/review workflows.*   **Pending to close SPEC-0006:**  - Stabilize local backend startup in target Java runtime and capture evidence.
+  - ✅ DTO alignment and library API extensions for state/review workflows.
+  - ✅ Catalog/media hardening for upcoming editable book modal (`PUT /books/{id}`, creator/admin cover management, `createdBy` propagation).
+*   **Pending to close SPEC-0006:**
   - Stabilize local frontend dev startup and capture evidence.
   - Execute E2E frontend-backend integration checks.
   - Collect evidence for AC closure and final status update.

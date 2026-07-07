@@ -69,16 +69,10 @@ public class MediaService {
         validateUpload(file, mediaProperties.getMaxCoverSize());
 
         Book book = getBook(bookId);
+        UserAccount actor = authorizeCoverOwnerOrAdmin(principalUserId, book);
         MediaUpload existing = mediaUploadRepository
                 .findFirstByResourceTypeAndResourceIdAndDeletedAtIsNullOrderByUploadedAtDesc(MediaResourceType.COVER, bookId)
                 .orElse(null);
-
-        UserAccount actor = resolveCoverActor(principalUserId, book);
-        boolean isAdmin = actor.getRole() == UserRole.ADMIN;
-
-        if (existing != null && !isAdmin) {
-            throw new MediaException(HttpStatus.FORBIDDEN, "Only admin can replace an existing cover");
-        }
 
         softDeleteActiveMedia(MediaResourceType.COVER, bookId);
 
@@ -123,10 +117,7 @@ public class MediaService {
 
     public void deleteCover(UUID bookId, UUID principalUserId) {
         Book book = getBook(bookId);
-        UserAccount actor = resolveCoverActor(principalUserId, book);
-        if (actor.getRole() != UserRole.ADMIN) {
-            throw new MediaException(HttpStatus.FORBIDDEN, "Only admin can delete a cover");
-        }
+        authorizeCoverOwnerOrAdmin(principalUserId, book);
 
         softDeleteActiveMedia(MediaResourceType.COVER, bookId);
         book.setCoverUrl(null);
@@ -148,6 +139,16 @@ public class MediaService {
     private UserAccount resolveCoverActor(UUID principalUserId, Book book) {
         UUID effectivePrincipal = principalUserId != null ? principalUserId : book.getCreatedBy().getId();
         return getUser(effectivePrincipal);
+    }
+
+    private UserAccount authorizeCoverOwnerOrAdmin(UUID principalUserId, Book book) {
+        UserAccount requester = resolveCoverActor(principalUserId, book);
+        boolean owner = book.getCreatedBy() != null && book.getCreatedBy().getId().equals(requester.getId());
+        boolean admin = requester.getRole() == UserRole.ADMIN;
+        if (!owner && !admin) {
+            throw new MediaException(HttpStatus.FORBIDDEN, "Only the creator or an admin can manage this cover");
+        }
+        return requester;
     }
 
     private UserAccount getUser(UUID userId) {

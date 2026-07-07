@@ -6,7 +6,7 @@
 import React from 'react';
 import type { LibraryStats } from '../../types/library';
 import { ReadingState } from '../../types/shared';
-import { formatRating } from '../../utils/formatters';
+import { formatAverageRatingValue } from '../../utils/formatters';
 
 interface StatsSectionProps {
   stats: LibraryStats | undefined;
@@ -111,7 +111,7 @@ export const StatsSection: React.FC<StatsSectionProps> = ({
           </div>
           <div className="stat-content">
             <span className="stat-label">Avg Rating</span>
-            <span className="stat-value">{formatRating(stats.averageRating)}</span>
+            <span className="stat-value">{formatAverageRatingValue(stats.averageRating)}</span>
           </div>
         </div>
       </div>

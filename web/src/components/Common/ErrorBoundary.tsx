@@ -4,6 +4,7 @@
 
 import React, { Component } from 'react';
 import type { ErrorInfo } from 'react';
+import { ActionIcon } from './ActionIcon';
 
 interface Props {
   children: React.ReactNode;
@@ -46,10 +47,12 @@ export class ErrorBoundary extends Component<Props, State> {
               An unexpected error occurred. Please refresh the page.
             </p>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary icon-only-btn"
               onClick={() => window.location.reload()}
+              data-tooltip="Refresh Page"
+              aria-label="Refresh Page"
             >
-              Refresh Page
+              <ActionIcon name="confirm" />
             </button>
           </div>
         </div>

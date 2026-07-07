@@ -145,14 +145,23 @@
    Selected Book
    ----------------------------------------------- */
 .selected-book {
-  display: flex;
-  gap: 16px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 14px;
+  row-gap: 10px;
+  align-items: start;
   padding: 16px;
   background: linear-gradient(135deg, #eff6ff, #f0fdf4);
   border: 2px solid var(--color-primary);
   border-radius: var(--radius-md);
   position: relative;
+}
+
+.selected-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
 }
 
 .selected-badge {
@@ -211,7 +220,82 @@
 
 .selected-book .btn-link {
   flex-shrink: 0;
-  margin-top: -4px;
+}
+
+.selected-controls {
+  display: flex;
+  gap: 8px;
+  align-self: start;
+  margin-top: 4px;
+}
+
+.selected-reading-panel {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(59, 130, 246, 0.22);
+  border-radius: var(--radius-md);
+  padding: 10px;
+}
+
+.selected-reading-title {
+  margin: 0 0 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.selected-reading-actions {
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.selected-reading-actions .btn {
+  min-width: 90px;
+}
+
+.selected-review-inline {
+  margin-top: 8px;
+  display: grid;
+  gap: 8px;
+}
+
+.selected-review-input {
+  min-height: 62px;
+  resize: vertical;
+  font-size: 0.9rem;
+}
+
+.selected-review-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.selected-review-readonly {
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.8);
+  padding: 8px;
+  display: grid;
+  gap: 6px;
+}
+
+.selected-review-readonly-rating {
+  color: var(--color-warning);
+  font-weight: 700;
+}
+
+.selected-review-readonly-opinion {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  white-space: pre-wrap;
+}
+
+.selected-book .alert {
+  grid-column: 1 / -1;
+  margin-top: 2px;
 }
 
 /* -----------------------------------------------
@@ -298,8 +382,13 @@
   }
 
   .selected-book {
-    flex-direction: column;
+    grid-template-columns: 1fr;
     padding: 16px;
+  }
+
+  .selected-controls {
+    width: 100%;
+    justify-content: flex-end;
   }
 
   .selected-content {

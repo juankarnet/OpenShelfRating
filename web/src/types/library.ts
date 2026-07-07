@@ -13,12 +13,19 @@ export interface Book {
   title: string;
   author: string;
   isbn13?: string;
+  isbn10?: string;
+  otherAuthors?: string[];
   publisher?: string;
   language?: string;
   coverUrl?: string;
   createdBy?: string;
   pages?: number;
   publicationDate?: string;
+  genres?: string[];
+  canonical?: boolean;
+  existing?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /**

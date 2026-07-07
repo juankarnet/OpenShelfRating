@@ -7,6 +7,10 @@
 
 This technical plan outlines the implementation strategy for SPEC-0004 (Reading Lifecycle & Reviews). Status: **Implemented baseline**.
 
+**Extension Planning Status (2026-07-07):**
+- Backend prerequisites delivered and validated (`gradlew.bat test` successful).
+- Next step is frontend implementation over the already aligned catalog/media API surface.
+
 ## 2. Architecture & Pattern
 *   **Pattern:** State Machine on UserBook entity, enriched with review metadata
 *   **Key Change:** Extend UserBook with rating, opinion, timestamps for state transitions
@@ -191,11 +195,126 @@ CREATE INDEX idx_state_transitions_userbook ON reading_state_transitions(user_bo
 - Implement review retrieval panel bound to `GET /users/{userId}/library/{bookId}`.
 - Reuse library list section to prefill `bookId` values and improve flow continuity with SPEC-0003.
 
-### 7.2 Mobile (Expo React Native)
+### 7.2 Web Frontend Extension (Backend Prerequisites Delivered)
+
+**Goal:** extend the existing popup/detail flow so users can edit allowed book metadata in-place, and align the manual creation form with the real backend contract already implemented.
+
+**Impacted current frontend surfaces:**
+- `web/src/components/Modals/BookDetailModal.tsx`
+- `web/src/pages/AddBookPage.tsx`
+- `web/src/api.ts`
+
+**Confirmed current backend contract (source of truth for implementation planning):**
+- `PUT /books/{id}?actorUserId=...` exists in backend and updates catalog metadata.
+- `POST /books/{id}/cover` exists for cover upload.
+- `DELETE /books/{id}/cover` exists for cover deletion.
+- `POST /books?actorUserId=...` exists for catalog creation.
+
+**Important alignment note:** backend catalog/media support and OpenAPI synchronization are now part of the current delivery baseline for this extension.
+
+### 7.3 API Alignment Matrix (Validated)
+
+**Book detail popup editable fields requested by user:**
+- Requested: edit directly in popup.
+- Current backend support: delivered for the full editable metadata slice.
+
+**Fields currently editable through backend `UpdateBookRequest`:**
+- `title`
+- `primaryAuthor`
+- `otherAuthors`
+- `isbn13`
+- `isbn10`
+- `publisher`
+- `publicationDate`
+- `pages`
+- `language`
+- `genres`
+- `coverUrl`
+- `metadataCorrections`
+
+**Cover permission model validated against current backend:**
+- First cover upload when the book has no cover: creator or admin.
+- Replacing an existing cover: creator or admin.
+- Deleting an existing cover: creator or admin.
+
+### 7.4 Add Book Form Alignment (Validated Against `CreateBookRequest`)
+
+**Fields supported today by backend create API:**
+- `title`
+- `primaryAuthor`
+- `otherAuthors`
+- `isbn13`
+- `isbn10`
+- `publisher`
+- `publicationDate`
+- `pages`
+- `language`
+- `genres`
+- `coverUrl`
+
+**Fields currently present in frontend but not in backend create payload:**
+- `description`
+
+**Fields currently missing in frontend but supported by backend create payload:**
+- `isbn10`
+- `otherAuthors`
+- `publicationDate`
+- `pages`
+- `genres` (this is the closest current backend concept to the requested "tipo de libro")
+
+**User-request alignment to apply in frontend plan:**
+- Remove the direct `coverUrl` input from the manual creation form.
+- Remove the unsupported `description` field from the manual creation flow.
+- Add a selector for `genres` / book type using the backend enum options:
+    - `CLASSIC`
+    - `FICTION`
+    - `MYSTERY`
+    - `THRILLER`
+    - `ROMANCE`
+    - `SCIENCE_FICTION`
+    - `FANTASY`
+    - `BIOGRAPHY`
+    - `HISTORY`
+    - `SELF_HELP`
+    - `EDUCATION`
+    - `TECHNICAL`
+    - `POETRY`
+    - `DRAMA`
+    - `CHILDREN`
+    - `YOUNG_ADULT`
+- Add the missing creation fields that the API already supports and that are useful in MVP:
+    - `isbn10`
+    - `publicationDate`
+    - `pages`
+- Evaluate whether `otherAuthors` is exposed in MVP or deferred; backend already supports it.
+- Keep cover upload as a separate media action after create/select flow, not as a free URL field.
+
+### 7.5 Confirmed Web Implementation Sequence
+
+1. Update frontend API typings and service layer to reflect the real backend `BookResponse`, `CreateBookRequest`, and `UpdateBookRequest` contract.
+2. Refactor `BookDetailModal` into view/edit modes.
+3. Persist popup edits for the backend-supported metadata slice through `PUT /books/{id}`.
+4. Gate cover actions by resolved permission state:
+     - no cover + creator/admin => upload allowed
+    - existing cover + creator/admin => replace/delete allowed
+    - non-creator/non-admin => read-only cover state
+5. Refactor `AddBookPage` manual form to remove unsupported inputs and add missing supported metadata fields.
+6. Add `genres`/book type selector sourced from the backend enum.
+7. Validate create -> optional cover upload -> add to library flow end-to-end against existing API responses.
+
+### 7.6 Mobile (Expo React Native)
 - Implement state transition controls with optional reading date support.
 - Implement review submit and review fetch controls for selected `bookId`.
 - Render lifecycle/review response payloads for quick verification in development.
 
-### 7.3 Validation
+### 7.7 Validation
 - Web: execute `npm run build` in `web/`.
 - Mobile: execute TypeScript validation (`npx tsc --noEmit`) in `mobile/`.
+
+## 8. Resolved Decisions Before Coding
+
+- Popup inline editing will target the backend-supported metadata slice through `PUT /books/{id}`.
+- "Tipo de libro" maps directly to backend `genres`.
+- Frontend UX will use single-select for `genres` in this iteration, even though the backend supports multiple values.
+- `otherAuthors` is included in the first iteration of the manual creation form.
+- Creator users can replace/delete their own covers; admins can always do so.

@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react';
+import { ActionIcon } from '../Common/ActionIcon';
 
 interface SearchFilterProps {
   onSearch: (query: string) => void;
@@ -45,7 +46,7 @@ export const SearchFilter: React.FC<SearchFilterProps> = ({
             aria-label="Clear search"
             title="Clear"
           >
-            ✕
+            <ActionIcon name="clear" />
           </button>
         )}
       </div>

@@ -6,6 +6,7 @@ public record BookSearchResponse(
         UUID bookId,
         String title,
         String primaryAuthor,
-        String coverUrl
+        String coverUrl,
+        UUID createdBy
 ) {
 }

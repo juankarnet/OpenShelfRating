@@ -260,7 +260,8 @@ public class UserLibraryService {
                 book.getId(),
                 book.getTitle(),
                 book.getPrimaryAuthor(),
-                book.getCoverUrl()
+            book.getCoverUrl(),
+            book.getCreatedBy().getId()
         );
 
         return new UserBookResponse(

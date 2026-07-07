@@ -23,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -125,9 +126,48 @@ public class BookService {
     }
 
     public BookResponse updateBook(UUID bookId, UpdateBookRequest request, UUID actorUserId) {
-        requireAdmin(actorUserId);
-
         Book book = getBookOrThrow(bookId);
+        authorizeCreatorOrAdmin(book, actorUserId);
+
+        String nextTitle = request.title() != null ? requireNonBlank(request.title(), "title") : book.getTitle();
+        String nextPrimaryAuthor = request.primaryAuthor() != null
+                ? requireNonBlank(request.primaryAuthor(), "primaryAuthor")
+                : book.getPrimaryAuthor();
+        String nextNormalizedTitleAuthor = normalizer.buildTitleAuthorKey(nextTitle, nextPrimaryAuthor);
+        String nextIsbn13 = request.isbn13() != null ? isbnValidator.normalizeIsbn(request.isbn13()) : book.getIsbn13();
+        String nextIsbn10 = request.isbn10() != null ? isbnValidator.normalizeIsbn(request.isbn10()) : book.getIsbn10();
+
+        if (catalogProperties.isIsbnValidationStrict()) {
+            isbnValidator.validateIsbn13(nextIsbn13);
+            isbnValidator.validateIsbn10(nextIsbn10);
+        }
+
+        Book existingByIsbn = nextIsbn13 == null ? null : bookRepository.findByIsbn13(nextIsbn13).orElse(null);
+        if (existingByIsbn != null && !existingByIsbn.getId().equals(book.getId())) {
+            throw new CatalogException(HttpStatus.CONFLICT, "Another book already exists with the same ISBN-13");
+        }
+
+        Book existingByTitleAuthor = bookRepository.findByNormalizedTitleAuthor(nextNormalizedTitleAuthor).orElse(null);
+        if (existingByTitleAuthor != null && !existingByTitleAuthor.getId().equals(book.getId())) {
+            throw new CatalogException(HttpStatus.CONFLICT, "Another book already exists with the same title and primary author");
+        }
+
+        book.setTitle(nextTitle);
+        book.setPrimaryAuthor(nextPrimaryAuthor);
+        book.setNormalizedTitleAuthor(nextNormalizedTitleAuthor);
+        book.setIsbn13(nextIsbn13);
+        book.setIsbn10(nextIsbn10);
+
+        if (request.otherAuthors() != null) {
+            List<String> authors = request.otherAuthors().stream()
+                    .filter(Objects::nonNull)
+                    .map(String::trim)
+                    .filter(value -> !value.isBlank())
+                    .distinct()
+                    .toList();
+            book.setOtherAuthors(new ArrayList<>(authors));
+        }
+
         if (request.coverUrl() != null) {
             book.setCoverUrl(trimToNull(request.coverUrl()));
         }
@@ -136,6 +176,15 @@ public class BookService {
         }
         if (request.publisher() != null) {
             book.setPublisher(trimToNull(request.publisher()));
+        }
+        if (request.publicationDate() != null) {
+            book.setPublicationDate(request.publicationDate());
+        }
+        if (request.pages() != null) {
+            book.setPages(request.pages());
+        }
+        if (request.language() != null) {
+            book.setLanguage(requireNonBlank(request.language(), "language"));
         }
 
         book = bookRepository.save(book);
@@ -218,6 +267,15 @@ public class BookService {
         }
     }
 
+    private void authorizeCreatorOrAdmin(Book book, UUID userId) {
+        UserAccount user = getUser(userId);
+        boolean isAdmin = user.getRole() == UserRole.ADMIN;
+        boolean isCreator = book.getCreatedBy() != null && book.getCreatedBy().getId().equals(user.getId());
+        if (!isAdmin && !isCreator) {
+            throw new CatalogException(HttpStatus.FORBIDDEN, "Only the creator or an admin can update this book");
+        }
+    }
+
     private Book getBookOrThrow(UUID bookId) {
         return bookRepository.findById(bookId)
                 .orElseThrow(() -> new CatalogException(HttpStatus.NOT_FOUND, "Book not found"));
@@ -246,7 +304,7 @@ public class BookService {
     }
 
     private BookSearchResponse toBookSearchResponse(Book book) {
-        return new BookSearchResponse(book.getId(), book.getTitle(), book.getPrimaryAuthor(), book.getCoverUrl());
+        return new BookSearchResponse(book.getId(), book.getTitle(), book.getPrimaryAuthor(), book.getCoverUrl(), book.getCreatedBy().getId());
     }
 
     private String trimToNull(String value) {
@@ -255,5 +313,13 @@ public class BookService {
         }
         String trimmed = value.trim();
         return trimmed.isBlank() ? null : trimmed;
+    }
+
+    private String requireNonBlank(String value, String fieldName) {
+        String trimmed = trimToNull(value);
+        if (trimmed == null) {
+            throw new CatalogException(HttpStatus.BAD_REQUEST, fieldName + " must not be blank");
+        }
+        return trimmed;
     }
 }

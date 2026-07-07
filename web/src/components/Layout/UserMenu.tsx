@@ -6,10 +6,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { ActionIcon } from '../Common/ActionIcon';
 
 interface MenuItem {
   label: string;
-  icon: string;
+  icon: React.ReactNode;
   path?: string;
   action?: () => void;
   separator?: boolean;
@@ -64,13 +65,13 @@ export const UserMenu: React.FC = () => {
   };
 
   const menuItems: MenuItem[] = [
-    { label: 'Home', icon: '🏠', path: '/dashboard' },
-    { label: 'Profile', icon: '👤', path: '/profile' },
-    { label: 'Add Book', icon: '➕', path: '/add-book' },
-    { label: 'Settings', icon: '⚙️', path: '/settings' },
-    { label: 'Help', icon: '❓', path: '/help' },
-    { label: '', icon: '', separator: true },
-    { label: 'Logout', icon: '🚪', action: handleLogoutClick, className: 'menu-item-danger' },
+    { label: 'Home', icon: <ActionIcon name="details" />, path: '/dashboard' },
+    { label: 'Profile', icon: <ActionIcon name="edit" />, path: '/profile' },
+    { label: 'Add Book', icon: <ActionIcon name="add" />, path: '/add-book' },
+    { label: 'Settings', icon: <ActionIcon name="confirm" />, path: '/settings' },
+    { label: 'Help', icon: <ActionIcon name="details" />, path: '/help' },
+    { label: '', icon: null, separator: true },
+    { label: 'Logout', icon: <ActionIcon name="logout" />, action: handleLogoutClick, className: 'menu-item-danger' },
   ];
 
   const displayName = user?.displayName || user?.email || 'User';
@@ -163,13 +164,15 @@ export const UserMenu: React.FC = () => {
             <p className="modal-body">Are you sure you want to log out?</p>
             <div className="modal-actions">
               <button
-                className="btn btn-secondary"
+                className="btn btn-secondary icon-only-btn"
                 onClick={() => setShowLogoutConfirm(false)}
+                data-tooltip="Cancel"
+                aria-label="Cancel"
               >
-                Cancel
+                <ActionIcon name="cancel" />
               </button>
-              <button className="btn btn-danger" onClick={handleLogoutConfirm}>
-                Log out
+              <button className="btn btn-danger icon-only-btn" onClick={handleLogoutConfirm} data-tooltip="Log out" aria-label="Log out">
+                <ActionIcon name="logout" />
               </button>
             </div>
           </div>

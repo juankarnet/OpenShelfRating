@@ -5,6 +5,7 @@
 
 import React, { useState } from 'react';
 import { ReadingState } from '../../types/shared';
+import { ActionIcon } from '../Common/ActionIcon';
 
 interface ChangeStateModalProps {
   isOpen: boolean;
@@ -85,15 +86,17 @@ export const ChangeStateModal: React.FC<ChangeStateModalProps> = ({
         )}
 
         <div className="modal-actions">
-          <button className="btn btn-secondary" onClick={onCancel} disabled={isLoading}>
-            Cancel
+          <button className="btn btn-secondary icon-only-btn" onClick={onCancel} disabled={isLoading} data-tooltip="Cancel" aria-label="Cancel">
+            <ActionIcon name="cancel" />
           </button>
           <button
-            className="btn btn-primary"
+            className="btn btn-primary icon-only-btn"
             onClick={handleConfirm}
             disabled={!nextState || isLoading}
+            data-tooltip={isLoading ? 'Saving...' : 'Confirm'}
+            aria-label={isLoading ? 'Saving...' : 'Confirm'}
           >
-            {isLoading ? 'Saving...' : 'Confirm'}
+            <ActionIcon name="state" />
           </button>
         </div>
       </div>

@@ -139,3 +139,15 @@ export const formatAverageRating = (ratings: number[]): string => {
   const avg = ratings.reduce((a, b) => a + b, 0) / ratings.length;
   return formatRating(Math.round(avg * 10) / 10);
 };
+
+/**
+ * Format precomputed average rating with two decimals.
+ * @param value Average rating value
+ * @returns Formatted average (e.g., "4.25★") or "Not rated"
+ */
+export const formatAverageRatingValue = (value?: number | null): string => {
+  if (value === undefined || value === null) {
+    return 'Not rated';
+  }
+  return `${value.toFixed(2)}★`;
+};

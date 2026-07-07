@@ -3,7 +3,7 @@
 ## 1. Overview
 
 ## 1.1 Execution Status
-**Spec Sync:** Implemented (Last Sync: 2026-07-07)
+**Spec Sync:** Implemented (catalog editing hardening delivered, Last Sync: 2026-07-07)
 
 This technical plan outlines the implementation strategy for SPEC-0002 (Global Book Catalog). The baseline implementation is **Completed** and committed. This document captures both implemented scope and hardening items.
 
@@ -138,7 +138,7 @@ com.openshelfrating.backend.catalog.service/
     │   Retrieve book metadata
     │
     ├── updateBook(UUID bookId, UpdateBookRequest, UUID userId) → BookResponse
-    │   Admin-only: update cover_url, genres, metadata_corrections
+    │   Creator-or-admin: update editable metadata with deduplication guards
     │
     ├── searchBooks(String query, int page, int size) → Page<BookSearchResponse>
     │   Delegates to BookDeduplicationService
@@ -171,8 +171,17 @@ record CreateBookRequest(
 ) {}
 
 record UpdateBookRequest(
-    String coverUrl,                 // nullable, @URL
-    Set<BookGenre> genres,           // nullable, for admin corrections
+    String title,                    // nullable, non-blank if present
+    String primaryAuthor,            // nullable, non-blank if present
+    List<String> otherAuthors,       // nullable
+    String isbn13,                   // nullable, validated if present
+    String isbn10,                   // nullable, validated if present
+    String publisher,                // nullable
+    LocalDate publicationDate,       // nullable
+    Integer pages,                   // nullable, @Positive
+    String language,                 // nullable, @Size(min=2,max=5)
+    String coverUrl,                 // nullable, legacy/manual correction support
+    Set<BookGenre> genres,           // nullable
     String metadataCorrections       // nullable, audit notes
 ) {}
 
@@ -199,8 +208,15 @@ record BookSearchResponse(
     UUID bookId,
     String title,
     String primaryAuthor,
-    String coverUrl
+    String coverUrl,
+    UUID createdBy
 ) {}
+
+**Hardening Note (2026-07-07):**
+- `BookService.updateBook(...)` now authorizes creator or admin instead of admin-only.
+- Update flow now validates and persists: `title`, `primaryAuthor`, `otherAuthors`, `isbn13`, `isbn10`, `publisher`, `publicationDate`, `pages`, `language`, `genres`, `coverUrl`.
+- Update flow rejects collisions against existing ISBN-13 and normalized title+primary_author keys.
+- `BookSearchResponse` now includes `createdBy` and this propagates to library-facing payloads.
 
 record BooksPagedResponse(
     List<BookSearchResponse> books,

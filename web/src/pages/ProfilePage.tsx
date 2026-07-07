@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { ConfirmActionModal } from '../components/Modals/ConfirmActionModal';
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
+import { ActionIcon } from '../components/Common/ActionIcon';
 
 const ProfilePage: React.FC = () => {
   const ALLOWED_AVATAR_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -157,20 +158,24 @@ const ProfilePage: React.FC = () => {
               />
               <button
                 type="button"
-                className="btn btn-secondary"
+                className="btn btn-secondary icon-only-btn"
                 onClick={() => avatarInputRef.current?.click()}
                 disabled={isLoading || isSaving || isUploadingAvatar || isDeletingAvatar}
+                data-tooltip={isUploadingAvatar ? 'Uploading...' : 'Change avatar'}
+                aria-label={isUploadingAvatar ? 'Uploading...' : 'Change avatar'}
               >
-                {isUploadingAvatar ? 'Uploading...' : 'Change avatar'}
+                <ActionIcon name="upload" />
               </button>
               {user.avatarUrl && (
                 <button
                   type="button"
-                  className="btn btn-link"
+                  className="btn btn-link icon-only-btn"
                   onClick={handleDeleteAvatar}
                   disabled={isLoading || isSaving || isUploadingAvatar || isDeletingAvatar}
+                  data-tooltip={isDeletingAvatar ? 'Removing...' : 'Remove avatar'}
+                  aria-label={isDeletingAvatar ? 'Removing...' : 'Remove avatar'}
                 >
-                  {isDeletingAvatar ? 'Removing...' : 'Remove avatar'}
+                  <ActionIcon name="delete" />
                 </button>
               )}
             </div>
@@ -198,18 +203,22 @@ const ProfilePage: React.FC = () => {
                   <div className="form-actions">
                     <button
                       type="button"
-                      className="btn btn-secondary"
+                      className="btn btn-secondary icon-only-btn"
                       onClick={handleCancelEdit}
                       disabled={isSaving || isLoading}
+                      data-tooltip="Cancel"
+                      aria-label="Cancel"
                     >
-                      Cancel
+                      <ActionIcon name="cancel" />
                     </button>
                     <button
                       type="submit"
-                      className="btn btn-primary"
+                      className="btn btn-primary icon-only-btn"
                       disabled={isSaving || isLoading}
+                      data-tooltip={isSaving ? 'Saving...' : 'Save'}
+                      aria-label={isSaving ? 'Saving...' : 'Save'}
                     >
-                      {isSaving ? 'Saving...' : 'Save'}
+                      <ActionIcon name="save" />
                     </button>
                   </div>
                 </form>
@@ -217,11 +226,13 @@ const ProfilePage: React.FC = () => {
                 <div className="profile-value-with-action">
                   <p className="profile-value">{user.displayName}</p>
                   <button
-                    className="btn btn-link"
+                    className="btn btn-link icon-only-btn"
                     onClick={() => setIsEditingName(true)}
                     disabled={isLoading}
+                    data-tooltip="Edit"
+                    aria-label="Edit"
                   >
-                    Edit
+                    <ActionIcon name="edit" />
                   </button>
                 </div>
               )}
@@ -242,11 +253,13 @@ const ProfilePage: React.FC = () => {
         {/* Logout Button */}
         <div className="profile-actions">
           <button
-            className="btn btn-danger"
+            className="btn btn-danger icon-only-btn"
             onClick={() => setShowLogoutConfirm(true)}
             disabled={isLoading || isSaving}
+            data-tooltip="Logout"
+            aria-label="Logout"
           >
-            Logout
+            <ActionIcon name="logout" />
           </button>
         </div>
       </div>

@@ -17,7 +17,9 @@ export const Header: React.FC = () => {
         onClick={() => navigate('/dashboard')}
         aria-label="Go to Home"
       >
-        <span className="app-logo-icon">📚</span>
+        <span className="app-logo-icon" aria-hidden="true">
+          <img src="/app-icon.jpg" alt="" className="app-logo-img" />
+        </span>
         <span className="app-logo-text">OpenShelfRating</span>
       </button>
       <nav className="app-nav" aria-label="Main navigation">

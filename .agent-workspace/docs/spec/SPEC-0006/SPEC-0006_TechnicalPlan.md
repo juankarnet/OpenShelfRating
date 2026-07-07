@@ -231,6 +231,28 @@ No changes required; React Router works with Vite out-of-the-box. History mode S
 5. Responsive design pass: test on mobile (480px), tablet (768px), desktop (1024px+).
 6. Accessibility review: keyboard navigation, ARIA labels, screen reader compat.
 
+### Phase 8.1: Visual Asset & Iconography Consistency (Front)
+**Tasks:**
+1. Use representative action icons on existing buttons and actionable texts whenever possible (edit, save, delete, search, add, cancel, upload, logout, navigation).
+2. Keep text labels visible together with icons for accessibility and clarity.
+3. Centralize icon rendering in a reusable frontend component to avoid duplicated ad-hoc symbols.
+4. Use project image `images/icon.jpg` as application icon source (header brand icon + favicon via `web/public/app-icon.jpg`).
+5. Use project image `images/background.png` as a very light global background layer (`web/public/app-background.png`) with high-opacity overlay to preserve readability.
+6. Maintain an image inventory in `images/INVENTORY.md` with asset name, role, and usage path.
+
+#### Visual UX TODO (Delta 2026-07-07)
+**Scope:** Frontend visual polish and icon/readability consistency for Add Book + Book Detail flows.
+
+- [x] Replace ad-hoc/emoticon actions with reusable SVG icon set and stronger stroke visibility in shared icon component.
+- [x] Apply icon-only action pattern with custom hover tooltip behavior in main actionable controls.
+- [x] Fix detail modal reading-state/review action wiring via stable service layer contract to avoid state transition failures.
+- [x] Extend search-result selected-card flow to include initial reading state and optional review (stars + short comment when `READ`).
+- [x] Compact selected-card visual layout (content + reading panel + action controls) and move inline styles into dedicated Add Book CSS.
+- [ ] Improve reading-panel contrast and typographic hierarchy for faster scan on low-contrast displays.
+- [ ] Add lightweight visual feedback on successful state/review save (inline success hint/toast) without blocking flow.
+
+**Traceability:** REQ-017, REQ-018, AC-016, AC-017; integration dependency with SPEC-0004 reading lifecycle endpoints.
+
 ### Phase 9: Integration Testing & Validation
 **Tasks:**
 1. Write Vitest unit tests for components (BookCard, PaginationControls, etc.).
