@@ -1,6 +1,10 @@
-# Technical Plan: SPEC-0008 - Remove Book from Personal Library
+﻿# Technical Plan: SPEC-0008 - Remove Book from Personal Library
 
 ## 1. Overview
+
+## 1.1 Execution Status
+**Spec Sync:** Implemented (Last Sync: 2026-07-08)
+
 
 ### 1.1 Execution Status
 **Spec Sync:** Implemented (backend + frontend core delivered; tests added 2026-07-08)
@@ -13,13 +17,16 @@ This document describes the implementation strategy and current delivery state f
     - Soft-delete logic in `UserLibraryService.removeBookFromLibrary`: sets `deleted_at = now()`, no row is physically deleted.
     - Authorization enforced: owner or admin only (403 otherwise), 404 when no active entry found.
     - Re-add flow (SPEC-0003 REQ-008): reactivates soft-deleted record, resets all fields.
-    - Unit tests: `UserLibraryServiceRemoveTest` covering AC-001, AC-003, AC-004 (7 tests).
+    - `GET /books/{id}/deletion-eligibility` endpoint to evaluate creator-only system deletion eligibility.
+    - `DELETE /books/{id}` endpoint to delete catalog book only if creator and zero active library links remain.
+    - Unit tests: existing removal tests retained; new catalog deletion tests pending.
 - Frontend delivered:
-    - BookCard ⋮ menu item "Remove" → `onRemove(bookId)`.
+  - BookCard ⋮ menu item "Remove" → `onRemove(bookId)` in Library and Dashboard list flows.
     - `ConfirmActionModal` with book title in message (SPEC-0008 REQ-007).
     - `useRemoveBook` TanStack Query mutation with cache invalidation (books + stats).
     - Success notification (4 s auto-dismiss) and descriptive error with dismiss button (SPEC-0008 REQ-009, REQ-010).
-    - Remove action exposed from `BookDetailModal` via optional `onRemove` prop (SPEC-0008 REQ-011).
+  - Remove action exposed from `BookDetailModal` via optional `onRemove` prop in Library and Dashboard contexts (SPEC-0008 REQ-011).
+  - New second confirmation modal after unlink when backend reports eligibility; optional `DELETE /books/{id}` execution on explicit confirmation.
 
 ## 2. Architecture & Pattern
 *   **Pattern:** Hexagonal/Clean Architecture — consistent with SPEC-0001/0003.
@@ -102,7 +109,7 @@ BookCard ⋮ menu "Remove"  or  BookDetailModal delete button
 | 7. Frontend UX — BookCard | ⋮ menu "Remove" item | ✅ Delivered |
 | 8. Frontend UX — ConfirmModal | Confirmation before delete | ✅ Delivered |
 | 9. Frontend UX — Notifications | Success toast + error display (GAP-001, GAP-002) | ✅ Delivered (2026-07-08) |
-| 10. Frontend UX — DetailModal | Remove shortcut from book detail (GAP-003) | ✅ Delivered (2026-07-08) |
+| 10. Frontend UX — DetailModal | Remove shortcut from book detail in Dashboard/Library | ✅ Delivered (2026-07-08) |
 | 11. Unit tests backend | `UserLibraryServiceRemoveTest` (7 tests) | ✅ Delivered (2026-07-08) |
 | 12. Integration/E2E tests | Full flow incl. re-add dedup | ⏳ Pending |
 
@@ -114,7 +121,7 @@ BookCard ⋮ menu "Remove"  or  BookDetailModal delete button
 - ✅ Frontend confirmation modal mandatory before request.
 - ✅ Cache invalidated on success; list and stats refresh without reload.
 - ✅ Success notification visible; error message descriptive.
-- ✅ Remove accessible from both BookCard menu and BookDetailModal.
+- ✅ Remove accessible from both BookCard menu and BookDetailModal in Dashboard and Library pages.
 - ✅ 7 unit tests green (`UserLibraryServiceRemoveTest`).
 - ⏳ Integration/E2E evidence pending.
 
@@ -124,7 +131,7 @@ BookCard ⋮ menu "Remove"  or  BookDetailModal delete button
 |------|------|--------|
 | Re-add resets reading history without warning | Risk (UX) | Known gap — warning text in ConfirmModal deferred |
 | Generic error message in `removeBookFromLibrary` service | Gap (REQ-010 partial) | Service throws generic message; propagation to UI now done but server message not parsed |
-| No integration tests for full delete→re-add flow | Coverage gap | Deferred to E2E sprint |
+| No integration tests for full delete→re-add flow (Dashboard + Library paths) | Coverage gap | Deferred to E2E sprint |
 
 ## 7. Testing Evidence
 - `./gradlew.bat test --tests com.openshelfrating.backend.library.service.UserLibraryServiceRemoveTest --rerun-tasks` ✅

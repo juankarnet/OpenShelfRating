@@ -1,10 +1,10 @@
 ﻿# Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** SPEC-0007 Unified Search with External Integration
-*   **Current Gate:** Backend and web frontend implementation completed for unified search/import flow; final runtime and integration validation evidence remains pending before closure.
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-08 11:12:13 +02:00
-*   **Commit Target:** `SPEC-0007: implement unified search with Open Library integration`
+*   **Current Milestone:** SPEC-0008 Remove Book from Personal Library
+*   **Current Gate:** Backend + frontend implementation complete; spec-sync passing; pre-commit validation completed.
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-08 18:12:31 +02:00
+*   **Commit Target:** `SPEC-0008: implement remove book from library with optional catalog deletion`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -27,7 +27,7 @@
 *   **SPEC-0005:** ðŸŸ¡ In Progress (backend cover permission hardening delivered; frontend editable modal pending)
 *   **SPEC-0006:** ðŸŸ¡ In Progress (frontend phases implemented; backend compile/E2E validation pending)
 *   **SPEC-0007:** ðŸŸ¡ In Progress
-
+*   **SPEC-0008:** âœ… Implemented (library unlink + optional catalog deletion; two-step confirmation flow; backend + frontend + spec delivered)
 ## 5. Completed Milestones
 *   **SPEC-0001:** Identity & Access implemented and compiled.
 *   **Specification Governance:** Standard folder model applied (`SPEC-000X/` + spec/technical plan split).

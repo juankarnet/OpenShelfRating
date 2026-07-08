@@ -21,10 +21,11 @@ import { mediaApi } from '../api';
 import { useAuth } from '../hooks/useAuth';
 import { BookDetailModal } from '../components/Modals/BookDetailModal';
 import { ActionIcon } from '../components/Common/ActionIcon';
+import { deleteBookFromCatalog, getBookDeletionEligibility } from '../services/libraryService';
 
 const LibraryPage: React.FC = () => {
   const queryClient = useQueryClient();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const pagination = usePagination();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedState, setSelectedState] = useState<ReadingState | null>(null);
@@ -34,8 +35,10 @@ const LibraryPage: React.FC = () => {
   const [showStateModal, setShowStateModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [showCatalogDeleteModal, setShowCatalogDeleteModal] = useState(false);
   const [removeSuccess, setRemoveSuccess] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
+  const [pendingCatalogDeletion, setPendingCatalogDeletion] = useState<{ bookId: string; title: string } | null>(null);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailBook, setDetailBook] = useState<UserBook | null>(null);
@@ -91,14 +94,50 @@ const LibraryPage: React.FC = () => {
   const handleRemoveBook = async () => {
     if (!selectedBookId) return;
     const bookTitle = selectedBook?.book.title ?? 'Book';
+    const catalogBookId = selectedBook?.book.bookId ?? selectedBook?.book.id;
+
+    if (!catalogBookId) {
+      setRemoveError('Cannot remove this book because its catalog identifier is missing.');
+      return;
+    }
+
     try {
-      await removeMutation.mutateAsync(selectedBookId);
+      await removeMutation.mutateAsync(catalogBookId);
       setShowRemoveModal(false);
+
+      if (token && user?.userId) {
+        const eligibility = await getBookDeletionEligibility(catalogBookId, user.userId, token);
+        if (eligibility.canDeleteSystemBook) {
+          setPendingCatalogDeletion({ bookId: catalogBookId, title: bookTitle });
+          setShowCatalogDeleteModal(true);
+          return;
+        }
+      }
+
       setRemoveSuccess(`"${bookTitle}" removed from your library.`);
       setTimeout(() => setRemoveSuccess(null), 4000);
     } catch (err) {
       setRemoveError(err instanceof Error ? err.message : 'Failed to remove book. Please try again.');
       setShowRemoveModal(false);
+    }
+  };
+
+  const handleDeleteBookFromCatalog = async () => {
+    if (!pendingCatalogDeletion || !token || !user?.userId) {
+      return;
+    }
+
+    try {
+      await deleteBookFromCatalog(pendingCatalogDeletion.bookId, user.userId, token);
+      setShowCatalogDeleteModal(false);
+      setRemoveError(null);
+      setRemoveSuccess(`"${pendingCatalogDeletion.title}" removed from the system catalog.`);
+      setTimeout(() => setRemoveSuccess(null), 4000);
+      setPendingCatalogDeletion(null);
+      await queryClient.invalidateQueries({ queryKey: ['library'] });
+    } catch (err) {
+      setRemoveError(err instanceof Error ? err.message : 'Failed to delete book from system catalog.');
+      setShowCatalogDeleteModal(false);
     }
   };
 
@@ -274,6 +313,22 @@ const LibraryPage: React.FC = () => {
         </>
       )}
 
+      {pendingCatalogDeletion && (
+        <ConfirmActionModal
+          isOpen={showCatalogDeleteModal}
+          title="Delete Book From System"
+          message={`You created "${pendingCatalogDeletion.title}" and no other active user library links exist. Do you want to delete it from the system catalog as well?`}
+          confirmText="Delete from system"
+          isDangerous={true}
+          onConfirm={handleDeleteBookFromCatalog}
+          onCancel={() => {
+            setShowCatalogDeleteModal(false);
+            setPendingCatalogDeletion(null);
+          }}
+          isLoading={false}
+        />
+      )}
+
       {detailBook && (
         <BookDetailModal
           userBook={detailBook}
@@ -293,60 +348,60 @@ const LibraryPage: React.FC = () => {
 
       {selectedBook && showCoverModal && (
         <div className="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="cover-title">
-              <div className="modal-box">
-                <h2 id="cover-title" className="modal-title">Manage Cover</h2>
-                <p className="modal-body">{selectedBook.book.title}</p>
+          <div className="modal-box">
+            <h2 id="cover-title" className="modal-title">Manage Cover</h2>
+            <p className="modal-body">{selectedBook.book.title}</p>
 
-                <div className="form-group" style={{ textAlign: 'left' }}>
-                  <label htmlFor="cover-upload" className="form-label">Upload new cover</label>
-                  <input
-                    id="cover-upload"
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="form-input"
-                    onChange={handleSelectCoverFile}
-                    disabled={isCoverSubmitting}
-                  />
-                </div>
-
-                {coverError && <div className="alert alert-danger">{coverError}</div>}
-
-                <div className="modal-actions">
-                  <button
-                    className="btn btn-secondary icon-only-btn"
-                    onClick={() => {
-                      setShowCoverModal(false);
-                      setCoverFile(null);
-                      setCoverError(null);
-                    }}
-                    disabled={isCoverSubmitting}
-                    data-tooltip="Cancel"
-                    aria-label="Cancel"
-                  >
-                    <ActionIcon name="cancel" />
-                  </button>
-                  <button
-                    className="btn btn-primary icon-only-btn"
-                    onClick={handleUploadCover}
-                    disabled={isCoverSubmitting || !coverFile}
-                    data-tooltip={isCoverSubmitting ? 'Uploading...' : 'Upload'}
-                    aria-label={isCoverSubmitting ? 'Uploading...' : 'Upload'}
-                  >
-                    <ActionIcon name="upload" />
-                  </button>
-                  <button
-                    className="btn btn-danger icon-only-btn"
-                    onClick={handleDeleteCover}
-                    disabled={isCoverSubmitting}
-                    data-tooltip={isCoverSubmitting ? 'Processing...' : 'Delete Cover'}
-                    aria-label={isCoverSubmitting ? 'Processing...' : 'Delete Cover'}
-                  >
-                    <ActionIcon name="delete" />
-                  </button>
-                </div>
-              </div>
+            <div className="form-group" style={{ textAlign: 'left' }}>
+              <label htmlFor="cover-upload" className="form-label">Upload new cover</label>
+              <input
+                id="cover-upload"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                className="form-input"
+                onChange={handleSelectCoverFile}
+                disabled={isCoverSubmitting}
+              />
             </div>
-          )}
+
+            {coverError && <div className="alert alert-danger">{coverError}</div>}
+
+            <div className="modal-actions">
+              <button
+                className="btn btn-secondary icon-only-btn"
+                onClick={() => {
+                  setShowCoverModal(false);
+                  setCoverFile(null);
+                  setCoverError(null);
+                }}
+                disabled={isCoverSubmitting}
+                data-tooltip="Cancel"
+                aria-label="Cancel"
+              >
+                <ActionIcon name="cancel" />
+              </button>
+              <button
+                className="btn btn-primary icon-only-btn"
+                onClick={handleUploadCover}
+                disabled={isCoverSubmitting || !coverFile}
+                data-tooltip={isCoverSubmitting ? 'Uploading...' : 'Upload'}
+                aria-label={isCoverSubmitting ? 'Uploading...' : 'Upload'}
+              >
+                <ActionIcon name="upload" />
+              </button>
+              <button
+                className="btn btn-danger icon-only-btn"
+                onClick={handleDeleteCover}
+                disabled={isCoverSubmitting}
+                data-tooltip={isCoverSubmitting ? 'Processing...' : 'Delete Cover'}
+                aria-label={isCoverSubmitting ? 'Processing...' : 'Delete Cover'}
+              >
+                <ActionIcon name="delete" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -32,6 +32,12 @@ public interface UserBookRepository extends JpaRepository<UserBook, UUID> {
 
     long countByUserIdAndReadingStateAndDeletedAtIsNull(UUID userId, ReadingState readingState);
 
+    long countByBookIdAndDeletedAtIsNull(UUID bookId);
+
+    long countByBookIdAndUserIdNotAndDeletedAtIsNull(UUID bookId, UUID userId);
+
+    long deleteByBookId(UUID bookId);
+
     @Query("""
             select distinct ub from UserBook ub
             left join ub.book.otherAuthors oa

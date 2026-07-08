@@ -3,7 +3,7 @@
 ## 1. Overview
 
 ## 1.1 Execution Status
-**Spec Sync:** Implemented (catalog editing hardening delivered, Last Sync: 2026-07-07)
+**Spec Sync:** Implemented (Last Sync: 2026-07-08)
 
 This technical plan outlines the implementation strategy for SPEC-0002 (Global Book Catalog). The baseline implementation is **Completed** and committed. This document captures both implemented scope and hardening items.
 

@@ -67,6 +67,13 @@ interface ServiceUpdateReviewRequest {
   opinion?: string;
 }
 
+interface ServiceBookDeletionEligibility {
+  bookId: string;
+  canDeleteSystemBook: boolean;
+  activeLinksCount: number;
+  reason: string;
+}
+
 const mapUserBook = (item: ServiceUserBook & { book?: { primaryAuthor?: string; author?: string } }): ServiceUserBook => ({
   ...item,
   book: {
@@ -161,6 +168,40 @@ export const removeBookFromLibrary = async (userId: string, bookId: string, toke
 
   if (!response.ok) {
     throw new Error('Failed to remove book');
+  }
+};
+
+export const getBookDeletionEligibility = async (
+  bookId: string,
+  actorUserId: string,
+  token: string
+): Promise<ServiceBookDeletionEligibility> => {
+  const params = new URLSearchParams({ actorUserId });
+  const response = await fetch(`${API_BASE_URL}/books/${bookId}/deletion-eligibility?${params}`, {
+    method: 'GET',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to evaluate system book deletion eligibility');
+  }
+
+  return response.json();
+};
+
+export const deleteBookFromCatalog = async (
+  bookId: string,
+  actorUserId: string,
+  token: string
+): Promise<void> => {
+  const params = new URLSearchParams({ actorUserId });
+  const response = await fetch(`${API_BASE_URL}/books/${bookId}?${params}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to delete book from system catalog');
   }
 };
 

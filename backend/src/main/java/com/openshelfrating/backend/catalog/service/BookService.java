@@ -3,6 +3,7 @@ package com.openshelfrating.backend.catalog.service;
 import com.openshelfrating.backend.auth.domain.UserAccount;
 import com.openshelfrating.backend.auth.domain.UserRole;
 import com.openshelfrating.backend.auth.repository.UserAccountRepository;
+import com.openshelfrating.backend.catalog.api.BookDeletionEligibilityResponse;
 import com.openshelfrating.backend.catalog.api.BookResponse;
 import com.openshelfrating.backend.catalog.api.BookSearchResponse;
 import com.openshelfrating.backend.catalog.api.BookStatsResponse;
@@ -16,6 +17,7 @@ import com.openshelfrating.backend.catalog.domain.BookDeduplicationKeyType;
 import com.openshelfrating.backend.catalog.domain.BookGenre;
 import com.openshelfrating.backend.catalog.repository.BookDeduplicationKeyRepository;
 import com.openshelfrating.backend.catalog.repository.BookRepository;
+import com.openshelfrating.backend.library.repository.UserBookRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -36,6 +38,7 @@ public class BookService {
 
     private final BookRepository bookRepository;
     private final BookDeduplicationKeyRepository deduplicationKeyRepository;
+    private final UserBookRepository userBookRepository;
     private final UserAccountRepository userAccountRepository;
     private final IsbnValidator isbnValidator;
     private final TitleAuthorNormalizer normalizer;
@@ -44,6 +47,7 @@ public class BookService {
     public BookService(
             BookRepository bookRepository,
             BookDeduplicationKeyRepository deduplicationKeyRepository,
+            UserBookRepository userBookRepository,
             UserAccountRepository userAccountRepository,
             IsbnValidator isbnValidator,
             TitleAuthorNormalizer normalizer,
@@ -51,6 +55,7 @@ public class BookService {
     ) {
         this.bookRepository = bookRepository;
         this.deduplicationKeyRepository = deduplicationKeyRepository;
+        this.userBookRepository = userBookRepository;
         this.userAccountRepository = userAccountRepository;
         this.isbnValidator = isbnValidator;
         this.normalizer = normalizer;
@@ -124,6 +129,42 @@ public class BookService {
     public BookResponse getBook(UUID bookId) {
         Book book = getBookOrThrow(bookId);
         return toBookResponse(book, true);
+    }
+
+    @Transactional(readOnly = true)
+    public BookDeletionEligibilityResponse getDeletionEligibility(UUID bookId, UUID actorUserId) {
+        Book book = getBookOrThrow(bookId);
+        UserAccount actor = getUser(actorUserId);
+
+        boolean isCreator = book.getCreatedBy() != null && book.getCreatedBy().getId().equals(actor.getId());
+        if (!isCreator) {
+            return new BookDeletionEligibilityResponse(bookId, false, -1, "ONLY_CREATOR_CAN_DELETE_SYSTEM_BOOK");
+        }
+
+        long activeLinksByOthers = userBookRepository.countByBookIdAndUserIdNotAndDeletedAtIsNull(bookId, actor.getId());
+        if (activeLinksByOthers > 0) {
+            return new BookDeletionEligibilityResponse(bookId, false, activeLinksByOthers, "BOOK_STILL_LINKED_TO_OTHER_USERS");
+        }
+
+        long activeLinksCount = userBookRepository.countByBookIdAndDeletedAtIsNull(bookId);
+        if (activeLinksCount > 0) {
+            return new BookDeletionEligibilityResponse(bookId, false, activeLinksCount, "BOOK_STILL_ACTIVE_IN_LIBRARY");
+        }
+
+        return new BookDeletionEligibilityResponse(bookId, true, 0, "ELIGIBLE");
+    }
+
+    public void deleteBookFromCatalog(UUID bookId, UUID actorUserId) {
+        Book book = getBookOrThrow(bookId);
+        authorizeCreator(book, actorUserId);
+
+        long activeLinksCount = userBookRepository.countByBookIdAndDeletedAtIsNull(bookId);
+        if (activeLinksCount > 0) {
+            throw new CatalogException(HttpStatus.CONFLICT, "Cannot delete book because it is still linked to active user libraries");
+        }
+
+        userBookRepository.deleteByBookId(bookId);
+        bookRepository.delete(book);
     }
 
     public BookResponse updateBook(UUID bookId, UpdateBookRequest request, UUID actorUserId) {
@@ -277,6 +318,14 @@ public class BookService {
         boolean isCreator = book.getCreatedBy() != null && book.getCreatedBy().getId().equals(user.getId());
         if (!isAdmin && !isCreator) {
             throw new CatalogException(HttpStatus.FORBIDDEN, "Only the creator or an admin can update this book");
+        }
+    }
+
+    private void authorizeCreator(Book book, UUID userId) {
+        UserAccount user = getUser(userId);
+        boolean isCreator = book.getCreatedBy() != null && book.getCreatedBy().getId().equals(user.getId());
+        if (!isCreator) {
+            throw new CatalogException(HttpStatus.FORBIDDEN, "Only the creator can delete this book from the catalog");
         }
     }
 
