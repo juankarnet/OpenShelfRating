@@ -34,6 +34,8 @@ const LibraryPage: React.FC = () => {
   const [showStateModal, setShowStateModal] = useState(false);
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [removeSuccess, setRemoveSuccess] = useState<string | null>(null);
+  const [removeError, setRemoveError] = useState<string | null>(null);
   const [showCoverModal, setShowCoverModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [detailBook, setDetailBook] = useState<UserBook | null>(null);
@@ -88,8 +90,16 @@ const LibraryPage: React.FC = () => {
 
   const handleRemoveBook = async () => {
     if (!selectedBookId) return;
-    await removeMutation.mutateAsync(selectedBookId);
-    setShowRemoveModal(false);
+    const bookTitle = selectedBook?.book.title ?? 'Book';
+    try {
+      await removeMutation.mutateAsync(selectedBookId);
+      setShowRemoveModal(false);
+      setRemoveSuccess(`"${bookTitle}" removed from your library.`);
+      setTimeout(() => setRemoveSuccess(null), 4000);
+    } catch (err) {
+      setRemoveError(err instanceof Error ? err.message : 'Failed to remove book. Please try again.');
+      setShowRemoveModal(false);
+    }
   };
 
   const handleSelectCoverFile = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -169,6 +179,23 @@ const LibraryPage: React.FC = () => {
       <div className="library-filters">
         <SearchFilter onSearch={handleSearch} />
       </div>
+
+      {removeSuccess && (
+        <div className="alert alert-success" style={{ marginBottom: '12px' }}>{removeSuccess}</div>
+      )}
+      {removeError && (
+        <div className="alert alert-danger" style={{ marginBottom: '12px' }}>
+          {removeError}
+          <button
+            type="button"
+            className="btn btn-link btn-sm"
+            style={{ marginLeft: '8px' }}
+            onClick={() => setRemoveError(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {isLoading && <LoadingSpinner size="medium" />}
 
@@ -254,6 +281,12 @@ const LibraryPage: React.FC = () => {
           onClose={() => { setShowDetailModal(false); setDetailBook(null); }}
           onCoverUpdated={() => {
             void queryClient.invalidateQueries({ queryKey: ['library'] });
+          }}
+          onRemove={(userBookId) => {
+            setSelectedBookId(userBookId);
+            setShowDetailModal(false);
+            setDetailBook(null);
+            setShowRemoveModal(true);
           }}
         />
       )}

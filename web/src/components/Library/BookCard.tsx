@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import type { UserBook } from '../../types/library';
-import { formatRating, formatReadingState, formatTitle, formatAuthor } from '../../utils/formatters';
+import { formatRating, formatReadingState, formatTitle, formatAuthor, formatDate } from '../../utils/formatters';
 
 interface BookCardProps {
   book: UserBook;
@@ -67,6 +67,11 @@ export const BookCard: React.FC<BookCardProps> = ({
             {formatReadingState(book.state)}
           </span>
           <span className="book-card-rating">{formatRating(book.rating)}</span>
+          {book.addedAt && (
+            <span className="book-card-added" title="Added to library">
+              {formatDate(book.addedAt)}
+            </span>
+          )}
         </div>
       </div>
 

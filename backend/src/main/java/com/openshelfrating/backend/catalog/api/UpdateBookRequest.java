@@ -20,6 +20,7 @@ public record UpdateBookRequest(
         @Positive Integer pages,
         @Size(min = 2, max = 5) String language,
         @Size(max = 2048) String coverUrl,
+        @Size(max = 4000) String synopsis,
         Set<BookGenre> genres,
         @Size(max = 1000) String metadataCorrections
 ) {

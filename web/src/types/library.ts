@@ -19,6 +19,7 @@ export interface Book {
   language?: string;
   coverUrl?: string;
   createdBy?: string;
+  synopsis?: string;
   pages?: number;
   publicationDate?: string;
   genres?: string[];

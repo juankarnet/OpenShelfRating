@@ -35,6 +35,30 @@ const BOOK_GENRES = [
   'YOUNG_ADULT',
 ] as const;
 
+const LANGUAGE_LABELS: Record<string, string> = {
+  en: 'English',
+  eng: 'English',
+  es: 'Spanish',
+  spa: 'Spanish',
+  fr: 'French',
+  fra: 'French',
+  fre: 'French',
+  de: 'German',
+  deu: 'German',
+  ger: 'German',
+  it: 'Italian',
+  ita: 'Italian',
+  pt: 'Portuguese',
+  por: 'Portuguese',
+  ru: 'Russian',
+  rus: 'Russian',
+  ja: 'Japanese',
+  jpn: 'Japanese',
+  zh: 'Chinese',
+  chi: 'Chinese',
+  zho: 'Chinese',
+};
+
 const AddBookPage: React.FC = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -51,6 +75,7 @@ const AddBookPage: React.FC = () => {
   const [pages, setPages] = useState('');
   const [language, setLanguage] = useState('en');
   const [genre, setGenre] = useState('');
+  const [synopsis, setSynopsis] = useState('');
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [coverPreviewUrl, setCoverPreviewUrl] = useState<string | null>(null);
 
@@ -143,6 +168,7 @@ const AddBookPage: React.FC = () => {
     setPublicationDate('');
     setPages('');
     setGenre('');
+    setSynopsis('');
     setIsbn10('');
     setCoverFile(null);
     setCoverPreviewUrl(null);
@@ -162,6 +188,12 @@ const AddBookPage: React.FC = () => {
     if (book.isbn13) return `ISBN-13: ${book.isbn13}`;
     if (book.isbn10) return `ISBN-10: ${book.isbn10}`;
     return 'ISBN not available';
+  };
+
+  const getLanguageLabel = (book: UnifiedSearchResult): string => {
+    const normalized = book.language?.trim().toLowerCase();
+    if (!normalized) return 'Language not available';
+    return `Language: ${LANGUAGE_LABELS[normalized] ?? book.language}`;
   };
 
   const shouldAutoEnableSelectedReviewEdit = (state: ReadingState, rating: number, opinion: string) =>
@@ -297,6 +329,7 @@ const AddBookPage: React.FC = () => {
             pages: pages.trim() ? Number(pages) : undefined,
             language,
             genres: genre ? [genre] : undefined,
+            synopsis: synopsis.trim() || undefined,
           },
           user.userId,
           token
@@ -392,6 +425,12 @@ const AddBookPage: React.FC = () => {
                   className="form-input"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' && searchQuery.trim() && !isSearching && !isSubmitting) {
+                      event.preventDefault();
+                      void handleSearchByQuery();
+                    }
+                  }}
                   placeholder="978-0-1234-5678-9 or The Hobbit or Tolkien"
                   disabled={isSearching || isSubmitting}
                 />
@@ -466,7 +505,7 @@ const AddBookPage: React.FC = () => {
                       <p>{getSourceLabel(selectedBook)} · {getStatusLabel(selectedBook)}</p>
                       <p>{getBookIdentity(selectedBook)}</p>
                       <p>{selectedBook.publisher || 'Publisher not available'}</p>
-                      <p>{selectedBook.language ? `Language: ${selectedBook.language}` : 'Language not available'}</p>
+                      <p>{getLanguageLabel(selectedBook)}</p>
                       {selectedBook.metadataCompletionStatus === 'INCOMPLETE' && (
                         <p>Some metadata is incomplete and may be improved later.</p>
                       )}
@@ -782,6 +821,22 @@ const AddBookPage: React.FC = () => {
                     <option key={option} value={option}>{option.replaceAll('_', ' ')}</option>
                   ))}
                 </select>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="synopsis" className="form-label">
+                  Synopsis
+                </label>
+                <textarea
+                  id="synopsis"
+                  className="form-input"
+                  value={synopsis}
+                  onChange={(e) => setSynopsis(e.target.value)}
+                  placeholder="Short synopsis (optional)"
+                  rows={4}
+                  maxLength={4000}
+                  disabled={isSubmitting}
+                />
               </div>
 
               <div className="form-group">

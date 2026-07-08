@@ -137,7 +137,8 @@ public class UnifiedBookSearchService {
                 request.pages(),
                 trimToNull(request.language()),
                 request.genres(),
-                trimToNull(request.coverUrl())
+                trimToNull(request.coverUrl()),
+                null
         );
 
         BookResponse createdOrExisting = bookService.createBook(createBookRequest, actorUserId);

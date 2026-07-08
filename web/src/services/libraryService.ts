@@ -90,6 +90,7 @@ export const fetchLibraryBooks = async (
   const params = new URLSearchParams({
     page: request.page.toString(),
     size: request.size.toString(),
+    sort: 'addedAt,desc',
     ...(request.state && { state: request.state }),
     ...(request.search && { q: request.search }),
   });

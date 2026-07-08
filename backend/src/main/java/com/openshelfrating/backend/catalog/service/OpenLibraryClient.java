@@ -105,7 +105,7 @@ public class OpenLibraryClient {
 
         List<ExternalBookCandidate> results = new ArrayList<>();
         for (JsonNode doc : docs) {
-            ExternalBookCandidate candidate = mapSearchDoc(doc);
+            ExternalBookCandidate candidate = enrichSearchDoc(doc);
             if (candidate != null) {
                 results.add(candidate);
             }
@@ -234,6 +234,44 @@ public class OpenLibraryClient {
                 coverUrl,
                 externalSourceId
         );
+    }
+
+    private ExternalBookCandidate enrichSearchDoc(JsonNode docNode) {
+        ExternalBookCandidate base = mapSearchDoc(docNode);
+        if (base == null) {
+            return null;
+        }
+
+        String lookupIsbn = base.isbn13() != null ? base.isbn13() : base.isbn10();
+        if (lookupIsbn == null) {
+            return base;
+        }
+
+        try {
+            List<ExternalBookCandidate> detailed = searchByIsbn(lookupIsbn);
+            if (detailed.isEmpty()) {
+                return base;
+            }
+
+            ExternalBookCandidate hydrated = detailed.get(0);
+            return new ExternalBookCandidate(
+                    base.title() != null ? base.title() : hydrated.title(),
+                    base.primaryAuthor() != null ? base.primaryAuthor() : hydrated.primaryAuthor(),
+                    !base.otherAuthors().isEmpty() ? base.otherAuthors() : hydrated.otherAuthors(),
+                    base.isbn13() != null ? base.isbn13() : hydrated.isbn13(),
+                    base.isbn10() != null ? base.isbn10() : hydrated.isbn10(),
+                    hydrated.publisher() != null ? hydrated.publisher() : base.publisher(),
+                    base.publicationDate() != null ? base.publicationDate() : hydrated.publicationDate(),
+                    hydrated.pages() != null ? hydrated.pages() : base.pages(),
+                    hydrated.language() != null ? hydrated.language() : base.language(),
+                    !base.subjects().isEmpty() ? base.subjects() : hydrated.subjects(),
+                    hydrated.coverUrl() != null ? hydrated.coverUrl() : base.coverUrl(),
+                    base.externalSourceId() != null ? base.externalSourceId() : hydrated.externalSourceId()
+            );
+        } catch (OpenLibraryUnavailableException ex) {
+            log.debug("Open Library detail hydration skipped for ISBN {}: {}", lookupIsbn, ex.getMessage());
+            return base;
+        }
     }
 
     private String extractLanguageFromData(JsonNode languageNode) {

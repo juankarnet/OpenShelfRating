@@ -73,6 +73,9 @@ public class Book {
     @Column(name = "cover_url", length = 2048)
     private String coverUrl;
 
+    @Column(length = 4000)
+    private String synopsis;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "created_by", nullable = false)
     private UserAccount createdBy;
@@ -199,6 +202,14 @@ public class Book {
 
     public void setCoverUrl(String coverUrl) {
         this.coverUrl = coverUrl;
+    }
+
+    public String getSynopsis() {
+        return synopsis;
+    }
+
+    public void setSynopsis(String synopsis) {
+        this.synopsis = synopsis;
     }
 
     public UserAccount getCreatedBy() {

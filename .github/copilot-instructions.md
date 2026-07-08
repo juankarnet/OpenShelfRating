@@ -59,6 +59,37 @@
 *   Before creating any `SPEC-XXXX` commit, update the corresponding specification status fields and `PROJECT_STATE.md` to reflect the real current state.
 *   A specification-scoped commit is not complete if traceability/status updates are missing in the same commit.
 
+## Mandatory Context Read Rules (Per Action Type)
+
+These reads are **mandatory** before taking the corresponding action. Do not skip or assume the content is already known.
+
+### Before any implementation task (coding)
+1.  Read `.agent-workspace/docs/PROJECT_STATE.md` — verify current milestone, active spec, and known constraints.
+2.  Read the target `SPEC-XXXX/SPEC-XXXX.md` — confirm the exact REQ/RULE/AC being addressed.
+3.  Read the target `SPEC-XXXX/SPEC-XXXX_TechnicalPlan.md` — check phase status and pending items.
+
+### Before writing or updating a specification
+1.  Read `.agent-workspace/docs/APPLICATION_CONTEXT.md` — align with business vision and BR rules.
+2.  Read `.agent-workspace/docs/TECHNICAL_MANIFEST.md` — confirm stack constraints and architecture patterns.
+3.  Read `.agent-workspace/docs/PROJECT_STATE.md` — verify there is no conflicting active spec.
+4.  Read `.agent-workspace/docs/spec/SPEC_TEMPLATE.md` — use as structural baseline.
+
+### Before writing tests
+1.  Read the target `SPEC-XXXX/SPEC-XXXX.md` — derive test cases from AC-XXX and RULE-XXX.
+2.  Read the target `SPEC-XXXX/SPEC-XXXX_TechnicalPlan.md` — identify which phases are implemented and testable.
+
+### Before creating a SPEC-XXXX commit
+1.  Read `.agent-workspace/docs/PROJECT_STATE.md` — read current state before any edit.
+2.  Read `SPEC-XXXX/SPEC-XXXX.md` and `SPEC-XXXX/SPEC-XXXX_TechnicalPlan.md` — verify both are up to date.
+3.  Run `powershell -ExecutionPolicy Bypass -File .agent-workspace/scripts/validate-gates.ps1 -Mode spec-sync`.
+4.  If `spec-sync` fails, fix findings before proceeding.
+
+### Before switching milestones
+1.  Wait for explicit `[SYNC: FILE_NAME]` from the user.
+2.  Read the named file from disk before generating any response.
+
+---
+
 ## Mandatory SPEC Sync Checklist (Operational)
 *   For every `SPEC-XXXX` implementation commit, update all applicable files in the same change set:
 	*   `.agent-workspace/docs/spec/SPEC-XXXX/SPEC-XXXX.md` (metadata status/version/date + progress/traceability notes).

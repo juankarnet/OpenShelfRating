@@ -15,6 +15,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -107,7 +108,7 @@ public class UserLibraryService {
 
         int normalizedPage = Math.max(0, page);
         int normalizedSize = Math.max(1, Math.min(size, MAX_PAGE_SIZE));
-        Pageable pageable = PageRequest.of(normalizedPage, normalizedSize);
+        Pageable pageable = PageRequest.of(normalizedPage, normalizedSize, Sort.by(Sort.Direction.DESC, "addedAt"));
 
         String query = searchQuery == null ? "" : searchQuery.trim();
         Page<UserBook> result;

@@ -1,0 +1,2 @@
+ALTER TABLE books
+    ADD COLUMN synopsis VARCHAR(4000);

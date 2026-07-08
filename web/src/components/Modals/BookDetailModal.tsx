@@ -18,6 +18,7 @@ interface BookDetailModalProps {
   isOpen: boolean;
   onClose: () => void;
   onCoverUpdated: () => void;
+  onRemove?: (userBookId: string) => void;
 }
 
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -64,6 +65,7 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
   isOpen,
   onClose,
   onCoverUpdated,
+  onRemove,
 }) => {
   const { user, token } = useAuth();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -87,10 +89,9 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
   const [genre, setGenre] = useState(userBook.book.genres?.[0] ?? '');
   const [allGenres, setAllGenres] = useState<string[]>(userBook.book.genres ?? []);
   const [createdByValue, setCreatedByValue] = useState(userBook.book.createdBy ?? '');
+  const [createdByName, setCreatedByName] = useState('');
   const [bookCreatedAt, setBookCreatedAt] = useState(userBook.book.createdAt ?? '');
-  const [bookUpdatedAt, setBookUpdatedAt] = useState(userBook.book.updatedAt ?? '');
-  const [canonical, setCanonical] = useState(Boolean(userBook.book.canonical));
-  const [existing, setExisting] = useState(Boolean(userBook.book.existing));
+  const [synopsis, setSynopsis] = useState(userBook.book.synopsis ?? '');
 
   const [currentState, setCurrentState] = useState<ReadingState>(userBook.state);
   const [reviewRating, setReviewRating] = useState<number>(userBook.rating ?? 0);
@@ -127,6 +128,8 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
     genres?: string[];
     coverUrl?: string | null;
     createdBy?: string;
+    createdByName?: string | null;
+    synopsis?: string | null;
     createdAt?: string;
     updatedAt?: string;
     canonical?: boolean;
@@ -145,10 +148,9 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
     setAllGenres(source.genres ?? []);
     setLocalCoverUrl(source.coverUrl ? resolveMediaUrl(source.coverUrl) ?? source.coverUrl : null);
     setCreatedByValue(source.createdBy ?? book.createdBy ?? '');
+    setCreatedByName(source.createdByName ?? '');
+    setSynopsis(source.synopsis ?? '');
     setBookCreatedAt(source.createdAt ?? book.createdAt ?? '');
-    setBookUpdatedAt(source.updatedAt ?? book.updatedAt ?? '');
-    setCanonical(Boolean(source.canonical));
-    setExisting(Boolean(source.existing));
   };
 
   useEffect(() => {
@@ -175,8 +177,8 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
         language: userBook.book.language,
         genres: userBook.book.genres,
         coverUrl: userBook.book.coverUrl,
-        createdBy: userBook.book.createdBy,
-        createdAt: userBook.book.createdAt,
+        createdBy: userBook.book.createdBy,        createdByName: undefined,
+        synopsis: userBook.book.synopsis,        createdAt: userBook.book.createdAt,
         updatedAt: userBook.book.updatedAt,
         canonical: userBook.book.canonical,
         existing: userBook.book.existing,
@@ -304,18 +306,6 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const formatState = (s: string) => {
-    const map: Record<string, string> = { PENDING: 'Pending', READING: 'Reading', READ: 'Read' };
-    return map[s] ?? s;
-  };
-
-  const formatDateTime = (value?: string) => {
-    if (!value) return '-';
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return value;
-    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   };
 
   const shouldAutoEnableReviewEdit = (state: ReadingState, rating: number, opinion: string) =>
@@ -651,20 +641,10 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
               <>
                 <table className="book-detail-table">
                   <tbody>
+                  {(isbn13 || isbn10) && (
                     <tr>
-                      <th>Catalog ID</th>
-                      <td>{bookIdForMedia}</td>
-                    </tr>
-                  {isbn13 && (
-                    <tr>
-                      <th>ISBN-13</th>
-                      <td>{isbn13}</td>
-                    </tr>
-                  )}
-                  {isbn10 && (
-                    <tr>
-                      <th>ISBN-10</th>
-                      <td>{isbn10}</td>
+                      <th>ISBN</th>
+                      <td>{isbn13 || isbn10}</td>
                     </tr>
                   )}
                   {publisher && (
@@ -676,13 +656,13 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
                   {language && (
                     <tr>
                       <th>Language</th>
-                      <td>{language.toUpperCase()}</td>
+                      <td>{LANGUAGE_OPTIONS.find((o) => o.value === language)?.label ?? language}</td>
                     </tr>
                   )}
                   {genre && (
                     <tr>
                       <th>Type</th>
-                      <td>{allGenres.length > 0 ? allGenres.map((value) => value.replaceAll('_', ' ')).join(', ') : genre.replaceAll('_', ' ')}</td>
+                      <td>{allGenres.length > 0 ? allGenres.map((v) => v.replaceAll('_', ' ')).join(', ') : genre.replaceAll('_', ' ')}</td>
                     </tr>
                   )}
                   {pages && (
@@ -703,10 +683,12 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
                       <td>{otherAuthors}</td>
                     </tr>
                   )}
-                  <tr>
-                    <th>Status</th>
-                    <td>{formatState(currentState)}</td>
-                  </tr>
+                  {synopsis && (
+                    <tr>
+                      <th>Synopsis</th>
+                      <td style={{ whiteSpace: 'pre-wrap' }}>{synopsis}</td>
+                    </tr>
+                  )}
                   {reviewRating > 0 && (
                     <tr>
                       <th>Rating</th>
@@ -720,32 +702,38 @@ export const BookDetailModal: React.FC<BookDetailModalProps> = ({
                     </tr>
                   )}
                   <tr>
-                    <th>Created by</th>
-                    <td>{createdByValue || '-'}</td>
-                  </tr>
-                  <tr>
-                    <th>Canonical</th>
-                    <td>{canonical ? 'Yes' : 'No'}</td>
-                  </tr>
-                  <tr>
-                    <th>Existing</th>
-                    <td>{existing ? 'Yes' : 'No'}</td>
-                  </tr>
-                  <tr>
-                    <th>Created at</th>
-                    <td>{formatDateTime(bookCreatedAt)}</td>
-                  </tr>
-                  <tr>
-                    <th>Updated at</th>
-                    <td>{formatDateTime(bookUpdatedAt)}</td>
-                  </tr>
-                  <tr>
-                    <th>Added</th>
+                    <th>Added to library</th>
                     <td>{new Date(addedAt).toLocaleDateString()}</td>
                   </tr>
+                  {bookCreatedAt && (
+                    <tr>
+                      <th>Catalog date</th>
+                      <td>{bookCreatedAt ? new Date(bookCreatedAt).toLocaleDateString() : '-'}</td>
+                    </tr>
+                  )}
+                  {(createdByName || createdByValue) && (
+                    <tr>
+                      <th>Added by</th>
+                      <td>{createdByName || createdByValue}</td>
+                    </tr>
+                  )}
                   </tbody>
                 </table>
               </>
+            )}
+
+            {onRemove && !isEditMode && (
+              <div style={{ marginTop: '16px', borderTop: '1px solid var(--color-border)', paddingTop: '12px' }}>
+                <button
+                  type="button"
+                  className="btn btn-danger btn-sm icon-only-btn"
+                  onClick={() => onRemove(userBook.id)}
+                  data-tooltip="Remove from library"
+                  aria-label="Remove from library"
+                >
+                  <ActionIcon name="delete" />
+                </button>
+              </div>
             )}
           </div>
         </div>

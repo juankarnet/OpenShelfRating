@@ -21,6 +21,7 @@ public record CreateBookRequest(
         @Positive Integer pages,
         @Size(min = 2, max = 5) String language,
         Set<BookGenre> genres,
-        @Size(max = 2048) String coverUrl
+        @Size(max = 2048) String coverUrl,
+        @Size(max = 4000) String synopsis
 ) {
 }

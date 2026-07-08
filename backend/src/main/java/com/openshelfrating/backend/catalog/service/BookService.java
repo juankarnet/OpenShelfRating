@@ -92,6 +92,7 @@ public class BookService {
         book.setPages(request.pages());
         book.setLanguage(trimToNull(request.language()) == null ? "en" : request.language().trim());
         book.setCoverUrl(trimToNull(request.coverUrl()));
+        book.setSynopsis(trimToNull(request.synopsis()));
         book.setCreatedBy(actor);
         book.setCanonical(true);
 
@@ -170,6 +171,9 @@ public class BookService {
 
         if (request.coverUrl() != null) {
             book.setCoverUrl(trimToNull(request.coverUrl()));
+        }
+        if (request.synopsis() != null) {
+            book.setSynopsis(trimToNull(request.synopsis()));
         }
         if (request.genres() != null) {
             book.setGenres(request.genres());
@@ -295,7 +299,9 @@ public class BookService {
                 book.getLanguage(),
                 book.getGenres(),
                 book.getCoverUrl(),
+                book.getSynopsis(),
                 book.getCreatedBy().getId(),
+                book.getCreatedBy().getDisplayName(),
                 book.isCanonical(),
                 book.getCreatedAt(),
                 book.getUpdatedAt(),

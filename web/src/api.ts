@@ -76,7 +76,9 @@ export interface BookResponse {
   language: string
   genres: string[]
   coverUrl: string | null
+  synopsis: string | null
   createdBy: string
+  createdByName: string | null
   canonical: boolean
   createdAt: string
   updatedAt: string
@@ -145,6 +147,7 @@ interface CreateBookPayload {
   pages?: number
   language?: string
   genres?: string[]
+  synopsis?: string
 }
 
 export interface UpdateBookPayload {
