@@ -1,6 +1,7 @@
 package com.openshelfrating.backend.catalog.api;
 
 import com.openshelfrating.backend.catalog.service.BookService;
+import com.openshelfrating.backend.catalog.service.UnifiedBookSearchService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -21,9 +22,11 @@ import java.util.UUID;
 public class BookController {
 
     private final BookService bookService;
+    private final UnifiedBookSearchService unifiedBookSearchService;
 
-    public BookController(BookService bookService) {
+    public BookController(BookService bookService, UnifiedBookSearchService unifiedBookSearchService) {
         this.bookService = bookService;
+        this.unifiedBookSearchService = unifiedBookSearchService;
     }
 
     @PostMapping
@@ -42,6 +45,23 @@ public class BookController {
             @RequestParam(name = "size", defaultValue = "20") int size
     ) {
         return bookService.searchBooks(query, page, size);
+    }
+
+    @PostMapping("/search-unified")
+    public UnifiedSearchResponse searchUnified(
+            @Valid @RequestBody UnifiedSearchRequest request,
+            @RequestParam("actorUserId") UUID actorUserId
+    ) {
+        return unifiedBookSearchService.searchUnified(request.query(), actorUserId, request.limit());
+    }
+
+    @PostMapping("/search-unified/add")
+    public ResponseEntity<AddFromSearchResponse> addFromSearchResult(
+            @Valid @RequestBody AddFromSearchRequest request,
+            @RequestParam("actorUserId") UUID actorUserId
+    ) {
+        AddFromSearchResponse response = unifiedBookSearchService.addFromSearchResult(request, actorUserId);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/stats")

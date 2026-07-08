@@ -56,6 +56,8 @@ Optional modes for richer dataset and cleanup:
 | `APP_MAIL_FROM` | `no-reply@openshelfrating.local` | Sender email used for auth notifications |
 | `APP_CATALOG_SEARCH_MAX_PAGE_SIZE` | `100` | Maximum allowed page size for catalog search endpoint |
 | `APP_CATALOG_ISBN_VALIDATION_STRICT` | `true` | Enables strict ISBN-10/13 checksum validation during book creation |
+| `APP_OPENLIBRARY_BASE_URL` | `https://openlibrary.org` | Base URL for Open Library API used by unified search fallback |
+| `APP_OPENLIBRARY_TIMEOUT_MILLIS` | `5000` | Timeout in milliseconds for each Open Library HTTP request |
 | `APP_MEDIA_ALLOWED_MIME_TYPES` | `image/jpeg,image/png,image/webp` | Allowed MIME types for avatar and cover uploads |
 | `APP_MEDIA_MAX_AVATAR_SIZE` | `5242880` | Max avatar upload size in bytes (5MB) |
 | `APP_MEDIA_MAX_COVER_SIZE` | `10485760` | Max cover upload size in bytes (10MB) |

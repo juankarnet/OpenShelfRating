@@ -8,7 +8,7 @@ import { useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../hooks/useAuth';
 import { catalogApi, libraryApi, mediaApi } from '../api';
-import type { BookSearchResponse } from '../api';
+import type { UnifiedSearchResult } from '../api';
 import { ReadingState } from '../types/shared';
 import { transitionReadingState, updateReview } from '../services/libraryService';
 import { LoadingSpinner } from '../components/Common/LoadingSpinner';
@@ -58,8 +58,9 @@ const AddBookPage: React.FC = () => {
   const MAX_COVER_SIZE_BYTES = 10 * 1024 * 1024;
 
   // Search & selection state
-  const [searchResults, setSearchResults] = useState<BookSearchResponse[]>([]);
-  const [selectedBook, setSelectedBook] = useState<BookSearchResponse | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<UnifiedSearchResult[]>([]);
+  const [selectedBook, setSelectedBook] = useState<UnifiedSearchResult | null>(null);
   const [selectedInitialState, setSelectedInitialState] = useState<ReadingState>(ReadingState.PENDING);
   const [selectedInitialRating, setSelectedInitialRating] = useState(0);
   const [selectedInitialOpinion, setSelectedInitialOpinion] = useState('');
@@ -69,6 +70,7 @@ const AddBookPage: React.FC = () => {
   const [selectedReviewError, setSelectedReviewError] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [searchWarning, setSearchWarning] = useState<string | null>(null);
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -83,23 +85,28 @@ const AddBookPage: React.FC = () => {
     );
   }
 
-  const handleSearchByIsbn = async () => {
-    if (!isbn.trim()) {
-      setSearchError('Please enter an ISBN.');
+  const handleSearchByQuery = async () => {
+    if (!searchQuery.trim()) {
+      setSearchError('Please enter ISBN, title, or author.');
       return;
     }
 
     setIsSearching(true);
     setSearchError(null);
+    setSearchWarning(null);
     setSearchResults([]);
     setSelectedBook(null);
 
     try {
-      const results = await catalogApi.search(isbn, 0, 10);
-      if (results.books && results.books.length > 0) {
-        setSearchResults(results.books);
+      const response = await catalogApi.searchUnified(searchQuery.trim(), 10, user.userId, token);
+      if (response.results && response.results.length > 0) {
+        setSearchResults(response.results);
       } else {
-        setSearchError('No books found with that ISBN. You can create a new entry below.');
+        setSearchError('No books found. You can create a new entry below.');
+      }
+
+      if (response.externalSearchFailed) {
+        setSearchWarning('Open Library is temporarily unavailable. Showing local results only.');
       }
     } catch (err) {
       setSearchError(err instanceof Error ? err.message : 'Search failed.');
@@ -108,7 +115,7 @@ const AddBookPage: React.FC = () => {
     }
   };
 
-  const handleSelectBook = (book: BookSearchResponse) => {
+  const handleSelectBook = (book: UnifiedSearchResult) => {
     setSelectedBook(book);
     setSelectedInitialState(ReadingState.PENDING);
     setSelectedInitialRating(0);
@@ -139,7 +146,22 @@ const AddBookPage: React.FC = () => {
     setIsbn10('');
     setCoverFile(null);
     setCoverPreviewUrl(null);
-    setIsbn('');
+    setSearchQuery('');
+  };
+
+  const getStatusLabel = (book: UnifiedSearchResult): string => {
+    if (book.status === 'EXISTS_IN_USER_LIBRARY') return 'Already in your library';
+    if (book.status === 'EXISTS_IN_SYSTEM') return 'Available in catalog';
+    return 'Import from Open Library';
+  };
+
+  const getSourceLabel = (book: UnifiedSearchResult): string =>
+    book.source === 'OPEN_LIBRARY' ? 'Open Library' : 'Local catalog';
+
+  const getBookIdentity = (book: UnifiedSearchResult): string => {
+    if (book.isbn13) return `ISBN-13: ${book.isbn13}`;
+    if (book.isbn10) return `ISBN-10: ${book.isbn10}`;
+    return 'ISBN not available';
   };
 
   const shouldAutoEnableSelectedReviewEdit = (state: ReadingState, rating: number, opinion: string) =>
@@ -226,14 +248,38 @@ const AddBookPage: React.FC = () => {
 
     try {
       let bookId: string;
+      let userBookId: string | null = null;
 
       if (selectedBook) {
-        // Use existing book
-        bookId = selectedBook.bookId;
-
-        if (coverFile) {
-          await mediaApi.uploadCover(bookId, coverFile, token);
+        if (selectedBook.status === 'EXISTS_IN_USER_LIBRARY') {
+          setSubmitError('This book is already in your library.');
+          setShowConfirmAdd(false);
+          return;
         }
+
+        const addFromSearchResponse = await catalogApi.addFromUnifiedSearch(
+          {
+            source: selectedBook.source,
+            bookId: selectedBook.bookId ?? undefined,
+            title: selectedBook.title,
+            primaryAuthor: selectedBook.primaryAuthor,
+            otherAuthors: selectedBook.otherAuthors,
+            isbn13: selectedBook.isbn13 ?? undefined,
+            isbn10: selectedBook.isbn10 ?? undefined,
+            publisher: selectedBook.publisher ?? undefined,
+            publicationDate: selectedBook.publicationDate ?? undefined,
+            pages: selectedBook.pages ?? undefined,
+            language: selectedBook.language,
+            genres: selectedBook.genres,
+            coverUrl: selectedBook.coverUrl ?? undefined,
+            externalSourceId: selectedBook.externalSourceId ?? undefined,
+          },
+          user.userId,
+          token,
+        );
+
+        bookId = addFromSearchResponse.bookId;
+        userBookId = addFromSearchResponse.userBookId;
       } else {
         // Create new book
         const newBook = await catalogApi.create(
@@ -262,16 +308,22 @@ const AddBookPage: React.FC = () => {
         }
       }
 
-      // Add to user's library
-      const userBook = await libraryApi.addBook(user.userId, bookId, token);
+      if (!selectedBook) {
+        const userBook = await libraryApi.addBook(user.userId, bookId, token);
+        userBookId = userBook.userBookId;
+      }
 
       const ratingToPersist = isSelectedReviewEditMode ? draftSelectedInitialRating : selectedInitialRating;
       const opinionToPersist = isSelectedReviewEditMode ? draftSelectedInitialOpinion : selectedInitialOpinion;
 
       if (selectedBook && selectedInitialState !== ReadingState.PENDING) {
+        if (!userBookId) {
+          throw new Error('Book was added but reading state could not be initialized.');
+        }
+
         await transitionReadingState(
           user.userId,
-          userBook.userBookId,
+          userBookId,
           {
             nextState: selectedInitialState,
             readDate: selectedInitialState === ReadingState.READ ? new Date().toISOString().slice(0, 10) : undefined,
@@ -282,7 +334,7 @@ const AddBookPage: React.FC = () => {
         if (selectedInitialState === ReadingState.READ && ratingToPersist > 0) {
           await updateReview(
             user.userId,
-            userBook.userBookId,
+            userBookId,
             {
               rating: ratingToPersist,
               opinion: opinionToPersist.trim() || undefined,
@@ -311,6 +363,10 @@ const AddBookPage: React.FC = () => {
   };
 
   const handleAddSelectedBook = () => {
+    if (selectedBook?.status === 'EXISTS_IN_USER_LIBRARY') {
+      setSubmitError('This book is already in your library.');
+      return;
+    }
     setSubmitError(null);
     setShowConfirmAdd(true);
   };
@@ -327,23 +383,23 @@ const AddBookPage: React.FC = () => {
           <div className="search-form">
             <div className="form-group">
               <label htmlFor="isbn" className="form-label">
-                ISBN-13 (optional)
+                Search by ISBN, title, or author
               </label>
               <div className="input-with-button">
                 <input
                   id="isbn"
                   type="text"
                   className="form-input"
-                  value={isbn}
-                  onChange={(e) => setIsbn(e.target.value)}
-                  placeholder="978-0-1234-5678-9"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="978-0-1234-5678-9 or The Hobbit or Tolkien"
                   disabled={isSearching || isSubmitting}
                 />
                 <button
                   type="button"
                   className="btn btn-secondary icon-only-btn"
-                  onClick={handleSearchByIsbn}
-                  disabled={!isbn.trim() || isSearching || isSubmitting}
+                  onClick={handleSearchByQuery}
+                  disabled={!searchQuery.trim() || isSearching || isSubmitting}
                   data-tooltip={isSearching ? 'Searching...' : 'Search'}
                   aria-label={isSearching ? 'Searching...' : 'Search'}
                 >
@@ -353,6 +409,7 @@ const AddBookPage: React.FC = () => {
             </div>
 
             {searchError && <div className="alert alert-warning">{searchError}</div>}
+            {searchWarning && <div className="alert alert-warning">{searchWarning}</div>}
 
             {/* Search Results */}
             {searchResults.length > 0 && (
@@ -374,11 +431,16 @@ const AddBookPage: React.FC = () => {
                       <div className="result-info">
                         <h4 className="result-title">{book.title}</h4>
                         <p className="result-author">{book.primaryAuthor}</p>
+                        <p className="result-author">{getSourceLabel(book)} · {getStatusLabel(book)}</p>
+                        {book.metadataCompletionStatus === 'INCOMPLETE' && (
+                          <p className="result-author">Metadata incomplete</p>
+                        )}
                       </div>
                       <button
                         type="button"
                         className="btn btn-primary btn-sm icon-only-btn"
                         onClick={() => handleSelectBook(book)}
+                        disabled={book.status === 'EXISTS_IN_USER_LIBRARY'}
                         data-tooltip="Select"
                         aria-label="Select"
                       >
@@ -393,7 +455,6 @@ const AddBookPage: React.FC = () => {
             {/* Selected Book */}
             {selectedBook && (
               <div className="selected-book">
-                <div className="selected-badge">✓ Selected</div>
                 <div className="selected-main">
                   <div className="selected-content">
                     {selectedBook.coverUrl && (
@@ -402,111 +463,120 @@ const AddBookPage: React.FC = () => {
                     <div className="selected-info">
                       <h4>{selectedBook.title}</h4>
                       <p>{selectedBook.primaryAuthor}</p>
+                      <p>{getSourceLabel(selectedBook)} · {getStatusLabel(selectedBook)}</p>
+                      <p>{getBookIdentity(selectedBook)}</p>
+                      <p>{selectedBook.publisher || 'Publisher not available'}</p>
+                      <p>{selectedBook.language ? `Language: ${selectedBook.language}` : 'Language not available'}</p>
+                      {selectedBook.metadataCompletionStatus === 'INCOMPLETE' && (
+                        <p>Some metadata is incomplete and may be improved later.</p>
+                      )}
                     </div>
                   </div>
 
-                  <div className="selected-reading-panel">
-                    <h3 className="selected-reading-title">Reading setup</h3>
-                    <div className="book-reading-actions selected-reading-actions">
-                    {[ReadingState.PENDING, ReadingState.READING, ReadingState.READ].map((state) => (
-                      <button
-                        key={state}
-                        type="button"
-                        className={`btn btn-sm ${selectedInitialState === state ? 'btn-primary' : 'btn-secondary'}`}
-                        onClick={() => handleSelectedStateChange(state)}
-                        disabled={isSubmitting}
-                      >
-                        {state === ReadingState.PENDING ? 'Pending' : state === ReadingState.READING ? 'Reading' : 'Read'}
-                      </button>
-                    ))}
-                    </div>
+                  {selectedBook.status === 'EXISTS_IN_USER_LIBRARY' && (
+                    <div className="selected-reading-panel">
+                      <h3 className="selected-reading-title">Reading setup</h3>
+                      <div className="book-reading-actions selected-reading-actions">
+                      {[ReadingState.PENDING, ReadingState.READING, ReadingState.READ].map((state) => (
+                        <button
+                          key={state}
+                          type="button"
+                          className={`btn btn-sm ${selectedInitialState === state ? 'btn-primary' : 'btn-secondary'}`}
+                          onClick={() => handleSelectedStateChange(state)}
+                          disabled={isSubmitting}
+                        >
+                          {state === ReadingState.PENDING ? 'Pending' : state === ReadingState.READING ? 'Reading' : 'Read'}
+                        </button>
+                      ))}
+                      </div>
 
-                    {selectedInitialState === ReadingState.READ && (
-                      <>
-                        {isSelectedReviewEditMode ? (
-                          <div className="book-review-inline selected-review-inline">
-                            <div className="book-review-stars" role="radiogroup" aria-label="Initial rating">
-                              {[1, 2, 3, 4, 5].map((value) => (
+                      {selectedInitialState === ReadingState.READ && (
+                        <>
+                          {isSelectedReviewEditMode ? (
+                            <div className="book-review-inline selected-review-inline">
+                              <div className="book-review-stars" role="radiogroup" aria-label="Initial rating">
+                                {[1, 2, 3, 4, 5].map((value) => (
+                                  <button
+                                    key={value}
+                                    type="button"
+                                    className={`star-btn ${value <= draftSelectedInitialRating ? 'active' : ''}`}
+                                    onClick={() => setDraftSelectedInitialRating(value)}
+                                    aria-label={`${value} stars`}
+                                    disabled={isSubmitting}
+                                  >
+                                    ★
+                                  </button>
+                                ))}
+                              </div>
+                              <textarea
+                                className="form-input selected-review-input"
+                                value={draftSelectedInitialOpinion}
+                                onChange={(event) => setDraftSelectedInitialOpinion(event.target.value)}
+                                placeholder="Add a short comment (optional)"
+                                rows={2}
+                                disabled={isSubmitting}
+                              />
+                              <div className="selected-review-actions">
                                 <button
-                                  key={value}
                                   type="button"
-                                  className={`star-btn ${value <= draftSelectedInitialRating ? 'active' : ''}`}
-                                  onClick={() => setDraftSelectedInitialRating(value)}
-                                  aria-label={`${value} stars`}
+                                  className="btn btn-secondary btn-sm icon-only-btn"
+                                  onClick={() => {
+                                    setDraftSelectedInitialRating(selectedInitialRating);
+                                    setDraftSelectedInitialOpinion(selectedInitialOpinion);
+                                    setIsSelectedReviewEditMode(false);
+                                    setSelectedReviewError(null);
+                                  }}
                                   disabled={isSubmitting}
+                                  data-tooltip="Cancel"
+                                  aria-label="Cancel"
                                 >
-                                  ★
+                                  <ActionIcon name="cancel" />
                                 </button>
-                              ))}
+                                <button
+                                  type="button"
+                                  className="btn btn-primary btn-sm icon-only-btn"
+                                  onClick={handleSaveSelectedReviewDraft}
+                                  disabled={isSubmitting}
+                                  data-tooltip="Save review"
+                                  aria-label="Save review"
+                                >
+                                  <ActionIcon name="save" />
+                                </button>
+                              </div>
                             </div>
-                            <textarea
-                              className="form-input selected-review-input"
-                              value={draftSelectedInitialOpinion}
-                              onChange={(event) => setDraftSelectedInitialOpinion(event.target.value)}
-                              placeholder="Add a short comment (optional)"
-                              rows={2}
-                              disabled={isSubmitting}
-                            />
-                            <div className="selected-review-actions">
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm icon-only-btn"
-                                onClick={() => {
-                                  setDraftSelectedInitialRating(selectedInitialRating);
-                                  setDraftSelectedInitialOpinion(selectedInitialOpinion);
-                                  setIsSelectedReviewEditMode(false);
-                                  setSelectedReviewError(null);
-                                }}
-                                disabled={isSubmitting}
-                                data-tooltip="Cancel"
-                                aria-label="Cancel"
-                              >
-                                <ActionIcon name="cancel" />
-                              </button>
-                              <button
-                                type="button"
-                                className="btn btn-primary btn-sm icon-only-btn"
-                                onClick={handleSaveSelectedReviewDraft}
-                                disabled={isSubmitting}
-                                data-tooltip="Save review"
-                                aria-label="Save review"
-                              >
-                                <ActionIcon name="save" />
-                              </button>
+                          ) : (
+                            <div className="selected-review-readonly">
+                              <div className="selected-review-readonly-rating">
+                                {selectedInitialRating > 0
+                                  ? `${'★'.repeat(selectedInitialRating)}${'☆'.repeat(5 - selectedInitialRating)}`
+                                  : 'Not rated'}
+                              </div>
+                              <p className="selected-review-readonly-opinion">{selectedInitialOpinion || 'No comment'}</p>
+                              <div className="selected-review-actions">
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary btn-sm icon-only-btn"
+                                  onClick={() => {
+                                    setDraftSelectedInitialRating(selectedInitialRating);
+                                    setDraftSelectedInitialOpinion(selectedInitialOpinion);
+                                    setIsSelectedReviewEditMode(true);
+                                    setSelectedReviewError(null);
+                                  }}
+                                  disabled={isSubmitting}
+                                  data-tooltip="Edit review"
+                                  aria-label="Edit review"
+                                >
+                                  <ActionIcon name="edit" />
+                                </button>
+                              </div>
                             </div>
-                          </div>
-                        ) : (
-                          <div className="selected-review-readonly">
-                            <div className="selected-review-readonly-rating">
-                              {selectedInitialRating > 0
-                                ? `${'★'.repeat(selectedInitialRating)}${'☆'.repeat(5 - selectedInitialRating)}`
-                                : 'Not rated'}
-                            </div>
-                            <p className="selected-review-readonly-opinion">{selectedInitialOpinion || 'No comment'}</p>
-                            <div className="selected-review-actions">
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm icon-only-btn"
-                                onClick={() => {
-                                  setDraftSelectedInitialRating(selectedInitialRating);
-                                  setDraftSelectedInitialOpinion(selectedInitialOpinion);
-                                  setIsSelectedReviewEditMode(true);
-                                  setSelectedReviewError(null);
-                                }}
-                                disabled={isSubmitting}
-                                data-tooltip="Edit review"
-                                aria-label="Edit review"
-                              >
-                                <ActionIcon name="edit" />
-                              </button>
-                            </div>
-                          </div>
-                        )}
+                          )}
 
-                        {selectedReviewError && <div className="alert alert-danger">{selectedReviewError}</div>}
-                      </>
-                    )}
-                  </div>
+                          {selectedReviewError && <div className="alert alert-danger">{selectedReviewError}</div>}
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 <div className="selected-controls">
@@ -524,7 +594,7 @@ const AddBookPage: React.FC = () => {
                     type="button"
                     className="btn btn-primary icon-only-btn"
                     onClick={handleAddSelectedBook}
-                    disabled={isSubmitting}
+                    disabled={isSubmitting || selectedBook.status === 'EXISTS_IN_USER_LIBRARY'}
                     data-tooltip={isSubmitting ? 'Adding...' : 'Add to Library'}
                     aria-label={isSubmitting ? 'Adding...' : 'Add to Library'}
                   >

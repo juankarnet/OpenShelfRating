@@ -25,6 +25,37 @@ export interface BookSearchResponse {
   createdBy: string
 }
 
+export type UnifiedSearchSource = 'LOCAL_DB' | 'OPEN_LIBRARY'
+export type UnifiedSearchStatus = 'EXISTS_IN_USER_LIBRARY' | 'EXISTS_IN_SYSTEM' | 'AVAILABLE_FOR_IMPORT'
+export type MetadataCompletionStatus = 'COMPLETE' | 'INCOMPLETE'
+
+export interface UnifiedSearchResult {
+  bookId: string | null
+  title: string
+  primaryAuthor: string
+  otherAuthors: string[]
+  isbn13: string | null
+  isbn10: string | null
+  publisher: string | null
+  publicationDate: string | null
+  pages: number | null
+  language: string
+  genres: string[]
+  coverUrl: string | null
+  source: UnifiedSearchSource
+  status: UnifiedSearchStatus
+  metadataCompletionStatus: MetadataCompletionStatus
+  externalSourceId: string | null
+}
+
+export interface UnifiedSearchResponse {
+  results: UnifiedSearchResult[]
+  count: number
+  query: string
+  searchedSources: string[]
+  externalSearchFailed: boolean
+}
+
 export interface BooksPagedResponse {
   books: BookSearchResponse[]
   page: number
@@ -131,7 +162,31 @@ export interface UpdateBookPayload {
   metadataCorrections?: string
 }
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080'
+export interface AddFromSearchPayload {
+  source: UnifiedSearchSource
+  bookId?: string
+  title?: string
+  primaryAuthor?: string
+  otherAuthors?: string[]
+  isbn13?: string
+  isbn10?: string
+  publisher?: string
+  publicationDate?: string
+  pages?: number
+  language?: string
+  genres?: string[]
+  coverUrl?: string
+  externalSourceId?: string
+}
+
+export interface AddFromSearchResponse {
+  bookId: string
+  userBookId: string
+  createdInSystem: boolean
+  status: UnifiedSearchStatus
+}
+
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? (import.meta.env.DEV ? '/api' : 'http://localhost:8080')
 
 class ApiError extends Error {
   readonly status: number
@@ -236,6 +291,26 @@ export const catalogApi = {
   search: (query: string, page = 0, size = 20) =>
     request<BooksPagedResponse>(
       `/books/search?q=${encodeURIComponent(query)}&page=${page}&size=${size}`,
+    ),
+
+  searchUnified: (query: string, limit: number, userId: string, token: string) =>
+    request<UnifiedSearchResponse>(
+      `/books/search-unified?actorUserId=${encodeURIComponent(userId)}`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ query, limit }),
+      },
+      token,
+    ),
+
+  addFromUnifiedSearch: (payload: AddFromSearchPayload, userId: string, token: string) =>
+    request<AddFromSearchResponse>(
+      `/books/search-unified/add?actorUserId=${encodeURIComponent(userId)}`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      },
+      token,
     ),
 
   getById: (bookId: string) => request<BookResponse>(`/books/${bookId}`),

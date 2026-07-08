@@ -1,10 +1,10 @@
 ﻿# Living Document: Project State Snapshot
 
 ## 1. Milestone Status
-*   **Current Milestone:** Cross-SPEC Catalog/Media Hardening for Editable Book Modal
-*   **Current Gate:** Backend enablement completed for editable catalog metadata and creator/admin cover management; frontend implementation and integration validation pending.
-*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-07 15:40:00 +02:00
-*   **Commit Target:** `SPEC-0002/SPEC-0005: enable creator/admin book editing and cover management`
+*   **Current Milestone:** SPEC-0007 Unified Search with External Integration
+*   **Current Gate:** Backend and web frontend implementation completed for unified search/import flow; final runtime and integration validation evidence remains pending before closure.
+*   **Last Sync:** [SYNC: PROJECT_STATE.md] 2026-07-08 11:12:13 +02:00
+*   **Commit Target:** `SPEC-0007: implement unified search with Open Library integration`
 
 ## 2. Canonical Sources
 *   **Global Policy:** `.github/copilot-instructions.md`
@@ -20,12 +20,13 @@
 *   **Testing:** JUnit 5 + Testcontainers (integration/E2E evidence still pending for SPEC-0006 closure)
 
 ## 4. Specification Status (MVP)
-*   **SPEC-0001:** ✅ Implemented
-*   **SPEC-0002:** ✅ Implemented (baseline + backend metadata editing hardening delivered)
-*   **SPEC-0003:** ✅ Implemented (baseline)
-*   **SPEC-0004:** ✅ Implemented (baseline)
-*   **SPEC-0005:** 🟡 In Progress (backend cover permission hardening delivered; frontend editable modal pending)
-*   **SPEC-0006:** 🟡 In Progress (frontend phases implemented; backend compile/E2E validation pending)
+*   **SPEC-0001:** âœ… Implemented
+*   **SPEC-0002:** âœ… Implemented (baseline + backend metadata editing hardening delivered)
+*   **SPEC-0003:** âœ… Implemented (baseline)
+*   **SPEC-0004:** âœ… Implemented (baseline)
+*   **SPEC-0005:** ðŸŸ¡ In Progress (backend cover permission hardening delivered; frontend editable modal pending)
+*   **SPEC-0006:** ðŸŸ¡ In Progress (frontend phases implemented; backend compile/E2E validation pending)
+*   **SPEC-0007:** ðŸŸ¡ In Progress
 
 ## 5. Completed Milestones
 *   **SPEC-0001:** Identity & Access implemented and compiled.
@@ -111,3 +112,18 @@
   - Stabilize local frontend dev startup and capture evidence.
   - Execute E2E frontend-backend integration checks.
   - Collect evidence for AC closure and final status update.
+
+## 11. SPEC-0007 Delivery Snapshot (Current)
+*   **Backend:**
+  - ✅ `POST /books/search-unified` and `POST /books/search-unified/add` implemented in the catalog API.
+  - ✅ Local-first search orchestration with Open Library fallback, ISBN/title/author handling, result status resolution, and in-memory external cache.
+  - ✅ External import flow can create catalog books, add them to the user library, and attempt cover persistence through media storage.
+  - ✅ Open Library payload logging and dev CORS adjustments applied for local integration.
+*   **Frontend:**
+  - ✅ Add Book flow now searches by ISBN, title, or author through the unified endpoint.
+  - ✅ Result cards expose source/status/completeness, disable re-add for books already in the user library, and remove the selected badge from the selected panel.
+  - ✅ Add/import flow initializes reading state and review data through the returned `userBookId`.
+*   **Validation:**
+  - ✅ `npx tsc -b --noEmit`
+  - ✅ Backend unit/full test evidence recorded in SPEC-0007 technical plan.
+  - ⏳ Final integrated runtime/E2E validation still pending.

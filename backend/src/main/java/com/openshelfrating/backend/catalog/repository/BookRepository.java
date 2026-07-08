@@ -16,6 +16,8 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
 
     Optional<Book> findByIsbn13(String isbn13);
 
+    Optional<Book> findByIsbn10(String isbn10);
+
     Optional<Book> findByNormalizedTitleAuthor(String normalizedTitleAuthor);
 
     Page<Book> findAllByCanonicalTrue(Pageable pageable);
@@ -32,6 +34,23 @@ public interface BookRepository extends JpaRepository<Book, UUID> {
             )
             """)
     Page<Book> searchCanonical(@Param("textQuery") String textQuery, @Param("exactQuery") String exactQuery, Pageable pageable);
+
+            @Query("""
+                select b from Book b
+                where b.canonical = true
+                  and lower(b.title) like lower(concat('%', :query, '%'))
+                """)
+            Page<Book> searchCanonicalByTitle(@Param("query") String query, Pageable pageable);
+
+            @Query("""
+                select distinct b from Book b
+                left join b.otherAuthors oa
+                where b.canonical = true and (
+                lower(b.primaryAuthor) like lower(concat('%', :query, '%'))
+                or lower(oa) like lower(concat('%', :query, '%'))
+                )
+                """)
+            Page<Book> searchCanonicalByAuthor(@Param("query") String query, Pageable pageable);
 
     @Query("select b.language, count(b) from Book b where b.canonical = true group by b.language")
     List<Object[]> countCanonicalByLanguage();

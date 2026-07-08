@@ -16,8 +16,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Locale;
@@ -33,6 +39,7 @@ public class MediaService {
     private final BookRepository bookRepository;
     private final S3StorageAdapter s3StorageAdapter;
     private final MediaProperties mediaProperties;
+    private final HttpClient httpClient;
 
     public MediaService(
             MediaUploadRepository mediaUploadRepository,
@@ -46,6 +53,7 @@ public class MediaService {
         this.bookRepository = bookRepository;
         this.s3StorageAdapter = s3StorageAdapter;
         this.mediaProperties = mediaProperties;
+        this.httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
     }
 
     public MediaUploadResponse uploadAvatar(UUID pathUserId, UUID principalUserId, MultipartFile file) {
@@ -122,6 +130,37 @@ public class MediaService {
         softDeleteActiveMedia(MediaResourceType.COVER, bookId);
         book.setCoverUrl(null);
         bookRepository.save(book);
+    }
+
+    public void importCoverFromExternalUrl(UUID bookId, UUID principalUserId, String coverUrl) {
+        if (coverUrl == null || coverUrl.isBlank()) {
+            return;
+        }
+
+        Book book = getBook(bookId);
+        authorizeCoverOwnerOrAdmin(principalUserId, book);
+
+        DownloadedExternalFile downloaded = downloadExternalImage(coverUrl.trim());
+
+        softDeleteActiveMedia(MediaResourceType.COVER, bookId);
+        String path = buildObjectPath("covers", bookId, downloaded.mimeType());
+
+        try (InputStream inputStream = new ByteArrayInputStream(downloaded.content())) {
+            s3StorageAdapter.uploadFile(path, inputStream, downloaded.content().length, downloaded.mimeType());
+        } catch (IOException ex) {
+            throw new MediaException(HttpStatus.BAD_GATEWAY, "Failed to read downloaded cover image");
+        }
+
+        book.setCoverUrl(path);
+        bookRepository.save(book);
+
+        MediaUpload mediaUpload = new MediaUpload();
+        mediaUpload.setResourceType(MediaResourceType.COVER);
+        mediaUpload.setResourceId(bookId);
+        mediaUpload.setS3Path(path);
+        mediaUpload.setMimeType(downloaded.mimeType());
+        mediaUpload.setFileSize(downloaded.content().length);
+        mediaUploadRepository.save(mediaUpload);
     }
 
     private UserAccount authorizeOwnerOrAdmin(UUID pathUserId, UUID principalUserId) {
@@ -233,5 +272,69 @@ public class MediaService {
             upload.setDeletedAt(now);
             mediaUploadRepository.save(upload);
         }
+    }
+
+    private DownloadedExternalFile downloadExternalImage(String url) {
+        HttpRequest request;
+        try {
+            request = HttpRequest.newBuilder(URI.create(url))
+                    .GET()
+                    .timeout(Duration.ofSeconds(10))
+                    .build();
+        } catch (IllegalArgumentException ex) {
+            throw new MediaException(HttpStatus.BAD_REQUEST, "Invalid cover URL");
+        }
+
+        HttpResponse<InputStream> response;
+        try {
+            response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+        } catch (IOException | InterruptedException ex) {
+            if (ex instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
+            throw new MediaException(HttpStatus.BAD_GATEWAY, "Failed to download cover image");
+        }
+
+        if (response.statusCode() < 200 || response.statusCode() >= 300) {
+            throw new MediaException(HttpStatus.BAD_GATEWAY, "Cover image URL returned non-success response");
+        }
+
+        String mimeType = response.headers().firstValue("Content-Type").orElse("image/jpeg");
+        if (mimeType.contains(";")) {
+            mimeType = mimeType.substring(0, mimeType.indexOf(';')).trim();
+        }
+
+        if (mediaProperties.getAllowedMimeTypes().stream().noneMatch(mimeType::equalsIgnoreCase)) {
+            throw new MediaException(HttpStatus.BAD_REQUEST, "Unsupported cover MIME type from external URL");
+        }
+
+        long maxCoverSize = mediaProperties.getMaxCoverSize();
+        byte[] content = readAllBytesWithLimit(response.body(), maxCoverSize);
+        if (content.length == 0) {
+            throw new MediaException(HttpStatus.BAD_REQUEST, "Downloaded cover image is empty");
+        }
+
+        return new DownloadedExternalFile(mimeType, content);
+    }
+
+    private byte[] readAllBytesWithLimit(InputStream inputStream, long maxBytes) {
+        try (InputStream in = inputStream; ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            long total = 0;
+            int read;
+            while ((read = in.read(buffer)) != -1) {
+                total += read;
+                if (total > maxBytes) {
+                    throw new MediaException(HttpStatus.PAYLOAD_TOO_LARGE, "External cover exceeds max allowed size");
+                }
+                out.write(buffer, 0, read);
+            }
+            return out.toByteArray();
+        } catch (IOException ex) {
+            throw new MediaException(HttpStatus.BAD_GATEWAY, "Failed to read downloaded cover image");
+        }
+    }
+
+    private record DownloadedExternalFile(String mimeType, byte[] content) {
     }
 }
